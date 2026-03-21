@@ -278,9 +278,53 @@ void displayStoppedScreen() {
         y_pos += line_h;
     }
 
+    StickCP2.Lcd.setTextDatum(BC_DATUM);
     StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.setCursor(30, StickCP2.Lcd.height() - 20);
-    StickCP2.Lcd.print("Press Front to Reset");
+    if (shotCount > 0) {
+        StickCP2.Lcd.drawString("Scroll=Shots / Front=Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+    } else {
+        StickCP2.Lcd.drawString("Press Front to Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+    }
+    drawLowBatteryIndicator();
+}
+
+void displayShotReviewScreen(int index) {
+    StickCP2.Lcd.fillScreen(BLACK);
+    StickCP2.Lcd.setTextFont(0);
+    StickCP2.Lcd.setTextColor(WHITE, BLACK);
+    int rotation = StickCP2.Lcd.getRotation();
+    int text_size = (rotation % 2 == 0) ? 1 : 2;
+    int line_h = (text_size == 1) ? 16 : 22;
+
+    // Title
+    StickCP2.Lcd.setTextDatum(TC_DATUM);
+    StickCP2.Lcd.setTextSize(text_size);
+    char title[20];
+    snprintf(title, sizeof(title), "Shot %d / %d", index + 1, shotCount);
+    StickCP2.Lcd.drawString(title, StickCP2.Lcd.width() / 2, 10);
+
+    // Shot time from buzzer
+    int y_pos = 10 + line_h + 8;
+    StickCP2.Lcd.setTextDatum(TL_DATUM);
+    StickCP2.Lcd.setTextSize(text_size);
+
+    float timeFromStart = (shotTimestamps[index] - startTime) / 1000.0f;
+    StickCP2.Lcd.setCursor(10, y_pos);
+    StickCP2.Lcd.printf("Time: %.2fs", timeFromStart);
+    y_pos += line_h;
+
+    // Split time
+    StickCP2.Lcd.setCursor(10, y_pos);
+    if (index == 0) {
+        StickCP2.Lcd.printf("Draw: %.2fs", splitTimes[0]);
+    } else {
+        StickCP2.Lcd.printf("Split: %.2fs", splitTimes[index]);
+    }
+
+    // Navigation hint
+    StickCP2.Lcd.setTextDatum(BC_DATUM);
+    StickCP2.Lcd.setTextSize(1);
+    StickCP2.Lcd.drawString("Scroll=Shots / Front=Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
     drawLowBatteryIndicator();
 }
 

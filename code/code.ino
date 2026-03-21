@@ -86,6 +86,7 @@ unsigned long lastDetectionTime = 0;
 
 int currentMenuSelection = 0;
 int menuScrollOffset = 0;
+int shotReviewIndex = -1;
 int settingsMenuLevel = 0;
 unsigned long btnTopPressTime = 0;
 bool btnTopHeld = false;
@@ -380,21 +381,56 @@ void loop() {
         case LIVE_FIRE_GET_READY:     handleLiveFireGetReady(); break;
         case LIVE_FIRE_TIMING:        handleLiveFireTiming(); break;
         case LIVE_FIRE_STOPPED:
-            if (redrawMenu) {
-                displayStoppedScreen();
-                redrawMenu = false;
-            }
-            if (StickCP2.BtnA.wasClicked()) {
-                resetActivityTimer();
-                if (previousState == NOISY_RANGE_TIMING || previousState == NOISY_RANGE_GET_READY || currentMode == MODE_NOISY_RANGE) {
-                     setState(NOISY_RANGE_READY);
-                } else if (previousState == DRY_FIRE_RUNNING || currentMode == MODE_DRY_FIRE) { 
-                    setState(DRY_FIRE_READY); 
+            {
+                if (redrawMenu) {
+                    if (shotReviewIndex < 0) {
+                        displayStoppedScreen();
+                    } else {
+                        displayShotReviewScreen(shotReviewIndex);
+                    }
+                    redrawMenu = false;
                 }
-                else { 
-                    setState(LIVE_FIRE_READY);
+
+                int rotation = StickCP2.Lcd.getRotation();
+                bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : StickCP2.BtnB.wasClicked();
+                bool downPressed = (rotation == 3) ? StickCP2.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+
+                if (shotCount > 0) {
+                    if (downPressed) {
+                        resetActivityTimer();
+                        if (shotReviewIndex < shotCount - 1) {
+                            shotReviewIndex++;
+                        }
+                        StickCP2.Lcd.fillScreen(BLACK);
+                        displayShotReviewScreen(shotReviewIndex);
+                    }
+                    if (upPressed) {
+                        resetActivityTimer();
+                        if (shotReviewIndex > 0) {
+                            shotReviewIndex--;
+                            StickCP2.Lcd.fillScreen(BLACK);
+                            displayShotReviewScreen(shotReviewIndex);
+                        } else if (shotReviewIndex == 0) {
+                            shotReviewIndex = -1;
+                            StickCP2.Lcd.fillScreen(BLACK);
+                            displayStoppedScreen();
+                        }
+                    }
                 }
-                StickCP2.Lcd.fillScreen(BLACK);
+
+                if (StickCP2.BtnA.wasClicked()) {
+                    resetActivityTimer();
+                    shotReviewIndex = -1;
+                    if (previousState == NOISY_RANGE_TIMING || previousState == NOISY_RANGE_GET_READY || currentMode == MODE_NOISY_RANGE) {
+                         setState(NOISY_RANGE_READY);
+                    } else if (previousState == DRY_FIRE_RUNNING || currentMode == MODE_DRY_FIRE) { 
+                        setState(DRY_FIRE_READY); 
+                    }
+                    else { 
+                        setState(LIVE_FIRE_READY);
+                    }
+                    StickCP2.Lcd.fillScreen(BLACK);
+                }
             }
             break;
         case DRY_FIRE_READY:          handleDryFireReadyInput(); break;

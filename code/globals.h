@@ -77,6 +77,7 @@ extern unsigned long lastDetectionTime;
 // Menu Variables
 extern int currentMenuSelection;
 extern int menuScrollOffset;
+extern int shotReviewIndex;
 extern int settingsMenuLevel;
 extern unsigned long btnTopPressTime;
 extern bool btnTopHeld;

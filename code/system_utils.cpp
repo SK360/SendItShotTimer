@@ -9,6 +9,9 @@ void setState(TimerState newState) {
         previousState = currentState;
         currentState = newState;
         redrawMenu = true;
+        if (newState == LIVE_FIRE_STOPPED) {
+            shotReviewIndex = -1;
+        }
     }
 }
 
