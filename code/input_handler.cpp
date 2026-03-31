@@ -5,7 +5,8 @@
 #include "nvs_utils.h"
 #include "system_utils.h"
 #include "audio_utils.h"     // For reset_bt_beep_state
-#include "bluetooth_utils.h" 
+#include "bluetooth_utils.h"
+#include "ota_utils.h"
 #include <LittleFS.h>
 
 
@@ -63,7 +64,7 @@ void handleSettingsInput() {
     static const char* liveFireItems[] = {"Max Shots", "Shot Threshold", "Min 1st Shot", "Start Delay Min", "Start Delay Max", "Calibrate Thresh.", "Back"};
     static const char* beepItems[] = {"Beep Duration", "Beep Tone", "Post Beep Delay", "Tone Sweep", "Back"};
     static const char* noisyItems[] = {"Recoil Threshold", "Calibrate Recoil", "Back"};
-    static const char* deviceItems[] = {"Screen Rotation", "Boot Animation", "Auto Sleep", "Device Status", "List Files", "Back"};
+    static const char* deviceItems[] = {"Screen Rotation", "Boot Animation", "Auto Sleep", "Device Status", "List Files", "Update Firmware", "Back"};
 
     const int maxDryFireItems = 1 + MAX_PAR_BEEPS + 1;
     static const char* dryFireItemsBuffer[maxDryFireItems];
@@ -355,6 +356,8 @@ void handleSettingsInput() {
                 setState(DEVICE_STATUS); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "List Files") == 0) {
                 setState(LIST_FILES); fileListScrollOffset = 0; needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+            } else if (strcmp(editingSettingName, "Update Firmware") == 0) {
+                setState(OTA_UPDATE); startOtaUpdate(); needsActionRedraw = false;
             } else if (strcmp(editingSettingName, "Back") == 0) {
                 settingsMenuLevel = 0; currentMenuSelection = 5; menuScrollOffset = 0;
             }

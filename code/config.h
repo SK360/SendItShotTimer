@@ -91,7 +91,8 @@ enum TimerState {
     LIST_FILES,
     EDIT_SETTING,
     CALIBRATE_THRESHOLD,
-    CALIBRATE_RECOIL
+    CALIBRATE_RECOIL,
+    OTA_UPDATE
 };
 
 // --- Operating Modes ---
