@@ -100,7 +100,8 @@ void displayMenu(const char* title, const char* items[], int count, int selectio
                               strcmp(items[i], "Beep Settings") == 0 ||
                               strcmp(items[i], "Bluetooth Settings") == 0 ||
                               strcmp(items[i], "Tone Sweep") == 0 ||
-                              strcmp(items[i], "Save & Exit") == 0);
+                              strcmp(items[i], "Save & Exit") == 0 ||
+                              strcmp(items[i], "Update Firmware") == 0);
 
         bool isParTimeSetting = (settingsMenuLevel == 2 && strncmp(items[i], "Par Time", 8) == 0);
         bool isBluetoothConnectItem = (settingsMenuLevel == 5 && strcmp(items[i], "Connect") == 0 );

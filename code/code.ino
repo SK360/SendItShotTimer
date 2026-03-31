@@ -24,6 +24,7 @@
 #include "bluetooth_utils.h"
 #include "nvs_utils.h"
 #include "system_utils.h"
+#include "ota_utils.h"
 
 
 // --- Global Variable Definitions ---
@@ -260,11 +261,12 @@ void loop() {
         }
     }
 
-    if (enableAutoSleep && 
-        currentState != BOOT_SCREEN && 
-        currentState != BOOT_JPG_SEQUENCE && 
-        currentState != BLUETOOTH_SCANNING && 
-        !a2dp_source.is_connected() ) { 
+    if (enableAutoSleep &&
+        currentState != BOOT_SCREEN &&
+        currentState != BOOT_JPG_SEQUENCE &&
+        currentState != BLUETOOTH_SCANNING &&
+        currentState != OTA_UPDATE &&
+        !a2dp_source.is_connected() ) {
         if (currentTime - lastActivityTime > AUTO_SLEEP_TIMEOUT_MS) {
             StickCP2.Lcd.fillScreen(BLACK);
             StickCP2.Lcd.setTextDatum(MC_DATUM);
@@ -321,7 +323,8 @@ void loop() {
                      currentState != SETTINGS_MENU_BEEP && currentState != SETTINGS_MENU_BLUETOOTH &&
                      currentState != SETTINGS_MENU_DRYFIRE && currentState != SETTINGS_MENU_NOISY &&
                      currentState != SETTINGS_MENU_DEVICE &&
-                     currentState != BLUETOOTH_SCANNING && 
+                     currentState != OTA_UPDATE &&
+                     currentState != BLUETOOTH_SCANNING &&
                      currentState != DEVICE_STATUS && currentState != LIST_FILES && 
                      currentState != EDIT_SETTING && currentState != CALIBRATE_THRESHOLD && 
                      currentState != CALIBRATE_RECOIL &&
@@ -456,7 +459,8 @@ void loop() {
         case LIST_FILES:              handleListFilesInput(); break;
         case CALIBRATE_THRESHOLD:
         case CALIBRATE_RECOIL:        handleCalibrationInput(currentState); break;
-        default: break; 
+        case OTA_UPDATE:              handleOtaUpdateLoop(); break;
+        default: break;
     }
     vTaskDelay(pdMS_TO_TICKS(10)); 
 }
