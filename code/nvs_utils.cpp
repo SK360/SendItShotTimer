@@ -46,6 +46,7 @@ void loadSettings() {
     currentBluetoothDeviceName = preferences.getString(KEY_BT_DEVICE_NAME, "LEXON MINO L");
     currentBluetoothAutoReconnect = preferences.getBool(KEY_BT_AUTO_RECONNECT, false);
     currentBluetoothVolume = preferences.getInt(KEY_BT_VOLUME, 80);
+    currentBluetoothAudioOffsetMs = preferences.getInt(KEY_BT_AUDIO_OFFSET, 0);
 
     peakBatteryVoltage = preferences.getFloat(KEY_PEAK_BATT, 4.2f); // Also load peak battery here
 
@@ -78,6 +79,7 @@ void saveSettings() {
     preferences.putString(KEY_BT_DEVICE_NAME, currentBluetoothDeviceName);
     preferences.putBool(KEY_BT_AUTO_RECONNECT, currentBluetoothAutoReconnect);
     preferences.putInt(KEY_BT_VOLUME, currentBluetoothVolume);
+    preferences.putInt(KEY_BT_AUDIO_OFFSET, currentBluetoothAudioOffsetMs);
 
     // preferences.end(); // Close NVS if done with batch of writes
 }
