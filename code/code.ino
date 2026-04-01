@@ -7,7 +7,8 @@
 #include <cmath>        // For abs, sin
 #include <float.h>      // For FLT_MAX
 #include <vector>       // For std::vector
-#include "driver/rtc_io.h" // For deep/light sleep wakeup
+#include "driver/rtc_io.h" // For light sleep wakeup
+#include "driver/gpio.h"   // For gpio_wakeup_enable
 #include "esp_sleep.h"     // For light sleep functions
 #include <freertos/FreeRTOS.h> // Added for FreeRTOS
 #include <freertos/task.h>
@@ -248,7 +249,10 @@ void loop() {
             StickCP2.Lcd.sleep();
             StickCP2.Lcd.waitDisplay();
 
-            esp_sleep_enable_ext1_wakeup((1ULL << 37), ESP_EXT1_WAKEUP_ALL_LOW);
+            gpio_wakeup_enable(GPIO_NUM_37, GPIO_INTR_LOW_LEVEL);  // BtnA (front)
+            gpio_wakeup_enable(GPIO_NUM_39, GPIO_INTR_LOW_LEVEL);  // BtnB (side)
+            gpio_wakeup_enable(GPIO_NUM_35, GPIO_INTR_LOW_LEVEL);  // BtnPWR (top)
+            esp_sleep_enable_gpio_wakeup();
             esp_light_sleep_start();
 
             StickCP2.Lcd.wakeup();
