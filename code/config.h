@@ -26,7 +26,8 @@ const unsigned long DEFAULT_MIN_FIRST_SHOT_TIME_MS = 100; // Default min time af
 const int DEFAULT_START_DELAY_MIN_MS = 2000;
 const int DEFAULT_START_DELAY_MAX_MS = 5000;
 const int MAX_START_DELAY_MS = 10000;
-const unsigned long AUTO_SLEEP_TIMEOUT_MS = 1 * 60 * 1000;
+const int AUTO_SLEEP_OPTIONS[] = {0, 1, 2, 5, 10};
+const int AUTO_SLEEP_OPTIONS_COUNT = 5;
 const unsigned long SLEEP_MESSAGE_DELAY_MS = 1500;
 // #define C3_FREQUENCY 130.81f // No longer used for keep-alive
 const unsigned long BT_SCAN_DURATION_S = 10;

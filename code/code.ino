@@ -44,7 +44,7 @@ int dryFireParBeepCount = 3;
 float dryFireParTimesSec[MAX_PAR_BEEPS];
 float recoilThreshold = 1.5f;
 int screenRotationSetting = 3;
-bool enableAutoSleep = true;
+int autoSleepMinutes = 1;
 
 int minFirstShotTimeMs = 100;
 int postBeepDelayMs = 200;
@@ -234,25 +234,28 @@ void loop() {
         }
     }
 
-    if (enableAutoSleep &&
+    if (autoSleepMinutes > 0 &&
         currentState != BLUETOOTH_SCANNING &&
         currentState != OTA_UPDATE &&
         !a2dp_source.is_connected() ) {
-        if (currentTime - lastActivityTime > AUTO_SLEEP_TIMEOUT_MS) {
+        unsigned long autoSleepTimeoutMs = (unsigned long)autoSleepMinutes * 60UL * 1000UL;
+        if (currentTime - lastActivityTime > autoSleepTimeoutMs) {
             StickCP2.Lcd.fillScreen(BLACK);
             StickCP2.Lcd.setTextDatum(MC_DATUM);
             StickCP2.Lcd.drawString("Sleeping...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
             delay(SLEEP_MESSAGE_DELAY_MS);
+            StickCP2.Lcd.setBrightness(0);
             StickCP2.Lcd.sleep();
             StickCP2.Lcd.waitDisplay();
 
-            esp_sleep_enable_ext1_wakeup((1ULL << 37), ESP_EXT1_WAKEUP_ALL_LOW); 
+            esp_sleep_enable_ext1_wakeup((1ULL << 37), ESP_EXT1_WAKEUP_ALL_LOW);
             esp_light_sleep_start();
 
             StickCP2.Lcd.wakeup();
-            delay(200); 
+            StickCP2.Lcd.setBrightness(100);
+            delay(200);
             resetActivityTimer();
-            redrawMenu = true; 
+            redrawMenu = true;
         }
     }
 

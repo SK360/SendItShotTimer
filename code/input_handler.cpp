@@ -357,7 +357,7 @@ void handleSettingsInput() {
             if (strcmp(editingSettingName, "Orientation") == 0) {
                 settingBeingEdited = EDIT_ROTATION; editingIntValue = screenRotationSetting; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Auto Sleep") == 0) {
-                settingBeingEdited = EDIT_AUTO_SLEEP; editingBoolValue = enableAutoSleep; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_AUTO_SLEEP; editingIntValue = autoSleepMinutes; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Device Status") == 0) {
                 setState(DEVICE_STATUS); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "WiFi Settings") == 0) {
@@ -398,7 +398,15 @@ void handleEditSettingInput() {
             case EDIT_PAR_TIME_ARRAY: editingFloatValue = min(max(editingFloatValue + (increment * 0.1f), 0.1f), 10.0f); break;
             case EDIT_RECOIL_THRESHOLD: editingFloatValue = min(max(editingFloatValue + (increment * 0.1f), 0.5f), 5.0f); break;
             case EDIT_ROTATION: editingIntValue = (editingIntValue == 1) ? 3 : 1; break;
-            case EDIT_AUTO_SLEEP: editingBoolValue = !editingBoolValue; break;
+            case EDIT_AUTO_SLEEP: {
+                int idx = 0;
+                for (int i = 0; i < AUTO_SLEEP_OPTIONS_COUNT; i++) {
+                    if (AUTO_SLEEP_OPTIONS[i] == editingIntValue) { idx = i; break; }
+                }
+                idx = (idx + increment + AUTO_SLEEP_OPTIONS_COUNT) % AUTO_SLEEP_OPTIONS_COUNT;
+                editingIntValue = AUTO_SLEEP_OPTIONS[idx];
+                break;
+            }
             case EDIT_BT_AUTO_RECONNECT: editingBoolValue = !editingBoolValue; break;
             case EDIT_BT_VOLUME:
                 editingIntValue = min(max(editingIntValue + (increment * 5), 0), 127);
@@ -428,7 +436,6 @@ void handleEditSettingInput() {
             redrawMenu = true;
         }
         if (valueChanged &&
-            settingBeingEdited != EDIT_AUTO_SLEEP && 
             settingBeingEdited != EDIT_BT_AUTO_RECONNECT &&
             settingBeingEdited != EDIT_BT_AUDIO_OFFSET &&
             settingBeingEdited != EDIT_TONE_SWEEP) { 
@@ -464,7 +471,7 @@ void handleEditSettingInput() {
                 break;
             case EDIT_RECOIL_THRESHOLD: recoilThreshold = editingFloatValue; break;
             case EDIT_ROTATION: screenRotationSetting = editingIntValue; break;
-            case EDIT_AUTO_SLEEP: enableAutoSleep = editingBoolValue; break;
+            case EDIT_AUTO_SLEEP: autoSleepMinutes = editingIntValue; break;
             case EDIT_BT_AUTO_RECONNECT:
                 currentBluetoothAutoReconnect = editingBoolValue;
                 break;

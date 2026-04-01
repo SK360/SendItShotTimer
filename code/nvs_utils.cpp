@@ -25,7 +25,13 @@ void loadSettings() {
     recoilThreshold = preferences.getFloat(KEY_NR_RECOIL, 1.5f);
     screenRotationSetting = preferences.getInt(KEY_ROTATION, 3);
     if (screenRotationSetting != 1 && screenRotationSetting != 3) screenRotationSetting = 3;
-    enableAutoSleep = preferences.getBool(KEY_AUTO_SLEEP, true);
+    autoSleepMinutes = preferences.getInt(KEY_AUTO_SLEEP, 1);
+    // Validate: must be one of the allowed values (0, 1, 2, 5, 10)
+    bool validSleep = false;
+    for (int i = 0; i < AUTO_SLEEP_OPTIONS_COUNT; i++) {
+        if (autoSleepMinutes == AUTO_SLEEP_OPTIONS[i]) { validSleep = true; break; }
+    }
+    if (!validSleep) autoSleepMinutes = 1;
 
     minFirstShotTimeMs = preferences.getInt(KEY_MIN_FIRST_SHOT, DEFAULT_MIN_FIRST_SHOT_TIME_MS);
     if (minFirstShotTimeMs < 0) minFirstShotTimeMs = 0;
@@ -67,7 +73,7 @@ void saveSettings() {
     }
     preferences.putFloat(KEY_NR_RECOIL, recoilThreshold);
     preferences.putInt(KEY_ROTATION, screenRotationSetting);
-    preferences.putBool(KEY_AUTO_SLEEP, enableAutoSleep);
+    preferences.putInt(KEY_AUTO_SLEEP, autoSleepMinutes);
 
     preferences.putInt(KEY_MIN_FIRST_SHOT, minFirstShotTimeMs);
     preferences.putInt(KEY_POST_BEEP_DELAY, postBeepDelayMs);

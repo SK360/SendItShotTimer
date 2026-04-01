@@ -118,7 +118,7 @@ input[type="number"]:focus,select:focus{outline:none;border-color:#4CAF50}
 <summary>Device</summary>
 <div class="fields">
 <div class="field"><label>Orientation</label><select id="screenRotation"><option value="1">Right Hand</option><option value="3">Left Hand</option></select></div>
-<div class="field toggle"><label>Auto Sleep</label><label class="switch"><input type="checkbox" id="autoSleep"><span class="slider"></span></label></div>
+<div class="field"><label>Auto Sleep</label><select id="autoSleep"><option value="0">Off</option><option value="1">1 min</option><option value="2">2 min</option><option value="5">5 min</option><option value="10">10 min</option></select></div>
 </div>
 </details>
 
@@ -162,7 +162,7 @@ document.getElementById('btVolume').value=d.bluetooth.volume;
 document.getElementById('btAudioOffset').value=d.bluetooth.audioOffset;
 document.getElementById('btAutoReconnect').checked=d.bluetooth.autoReconnect;
 document.getElementById('screenRotation').value=d.device.screenRotation;
-document.getElementById('autoSleep').checked=d.device.autoSleep;
+document.getElementById('autoSleep').value=d.device.autoSleep;
 }).catch(function(){toast('Failed to load settings',false)});
 document.getElementById('parBeepCount').addEventListener('change',function(){
 var n=parseInt(this.value)||1;
@@ -176,7 +176,7 @@ dryFire:{parBeepCount:n,parTimes:parTimes},
 noisyRange:{recoilThreshold:parseFloat(document.getElementById('recoilThreshold').value)||1.5},
 beep:{beepDuration:parseInt(document.getElementById('beepDuration').value)||150,beepTone:parseInt(document.getElementById('beepTone').value)||2000,postBeepDelay:parseInt(document.getElementById('postBeepDelay').value)||200},
 bluetooth:{volume:parseInt(document.getElementById('btVolume').value)||80,audioOffset:parseInt(document.getElementById('btAudioOffset').value)||0,autoReconnect:document.getElementById('btAutoReconnect').checked},
-device:{screenRotation:parseInt(document.getElementById('screenRotation').value)||3,autoSleep:document.getElementById('autoSleep').checked}};
+device:{screenRotation:parseInt(document.getElementById('screenRotation').value)||3,autoSleep:parseInt(document.getElementById('autoSleep').value)||0}};
 fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json()}).then(function(d){
 if(d.status==='ok'){toast('Settings saved!',true)}else{toast('Save failed: '+(d.message||'unknown error'),false)}}).catch(function(){toast('Save failed',false)})}
 </script>
@@ -261,7 +261,7 @@ static void handleGetSettings() {
 
     JsonObject dv = doc["device"].to<JsonObject>();
     dv["screenRotation"] = screenRotationSetting;
-    dv["autoSleep"] = enableAutoSleep;
+    dv["autoSleep"] = autoSleepMinutes;
 
     String output;
     serializeJson(doc, output);
@@ -365,8 +365,13 @@ static void handlePostSettings() {
             screenRotationSetting = (r == 1 || r == 3) ? r : 3;
             StickCP2.Lcd.setRotation(screenRotationSetting);
         }
-        if (dv["autoSleep"].is<bool>()) {
-            enableAutoSleep = dv["autoSleep"];
+        if (dv["autoSleep"].is<int>()) {
+            int s = (int)dv["autoSleep"];
+            bool valid = false;
+            for (int i = 0; i < AUTO_SLEEP_OPTIONS_COUNT; i++) {
+                if (AUTO_SLEEP_OPTIONS[i] == s) { valid = true; break; }
+            }
+            autoSleepMinutes = valid ? s : 1;
         }
     }
 
