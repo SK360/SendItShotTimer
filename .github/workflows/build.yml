@@ -35,7 +35,6 @@ jobs:
         run: |
           arduino-cli lib install "M5GFX@0.2.7"
           arduino-cli lib install "M5Unified@0.2.5"
-          arduino-cli lib install "ESP32-A2DP@1.8.7"
           arduino-cli lib install "ArduinoJson"
 
       - name: Install custom libraries
@@ -43,8 +42,12 @@ jobs:
           LIBS=$(arduino-cli config dump --format json | \
             python3 -c "import sys,json; print(json.load(sys.stdin)['directories']['user'])")/libraries
           mkdir -p "$LIBS"
-          git clone https://github.com/jcarletto27/ESP32-BT-Scanner "$LIBS/ESP32BluetoothScanner"
-          git clone https://github.com/jcarletto27/M5MicPeakRMS     "$LIBS/M5MicPeakRMS"
+          git clone --branch v1.8.7 --depth 1 \
+            https://github.com/pschatzmann/ESP32-A2DP  "$LIBS/ESP32-A2DP"
+          git clone --depth 1 \
+            https://github.com/jcarletto27/ESP32-BT-Scanner "$LIBS/ESP32BluetoothScanner"
+          git clone --depth 1 \
+            https://github.com/jcarletto27/M5MicPeakRMS     "$LIBS/M5MicPeakRMS"
 
       - name: Build firmware
         run: |
