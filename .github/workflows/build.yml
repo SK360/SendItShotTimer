@@ -1,0 +1,101 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Configure board manager URLs
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
+          arduino-cli config add board_manager.additional_urls \
+            https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+      - name: Install board package
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install m5stack:esp32@2.1.4
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "M5GFX@0.2.7"
+          arduino-cli lib install "M5Unified@0.2.5"
+          arduino-cli lib install "ESP32-A2DP@1.8.7"
+          arduino-cli lib install "ArduinoJson"
+
+      - name: Install custom libraries
+        run: |
+          LIBS=$(arduino-cli config dump --format json | \
+            python3 -c "import sys,json; print(json.load(sys.stdin)['directories']['user'])")/libraries
+          mkdir -p "$LIBS"
+          git clone https://github.com/jcarletto27/ESP32-BT-Scanner "$LIBS/ESP32BluetoothScanner"
+          git clone https://github.com/jcarletto27/M5MicPeakRMS     "$LIBS/M5MicPeakRMS"
+
+      - name: Build firmware
+        run: |
+          arduino-cli compile -e \
+            --fqbn "m5stack:esp32:m5stack_stickc_plus2" \
+            code/code.ino
+
+      - name: Package binaries
+        run: |
+          BUILD=code/build/m5stack.esp32.m5stack_stickc_plus2
+          pip3 install esptool --quiet
+          python3 -m esptool --chip esp32 merge_bin --target-offset 0 -o merged.bin \
+            0x1000  $BUILD/code.ino.bootloader.bin  \
+            0x8000  $BUILD/code.ino.partitions.bin  \
+            0x10000 $BUILD/code.ino.bin
+          cp $BUILD/code.ino.bin ota.bin
+
+      # --- dev branch: store as 90-day artifacts ---
+      - name: Upload artifacts
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-dev-${{ github.sha }}
+          path: |
+            merged.bin
+            ota.bin
+          retention-days: 90
+
+      # --- main branch: update rolling "latest" release ---
+      - name: Publish latest release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Delete existing latest release and tag, then recreate
+          gh release delete latest --yes 2>/dev/null || true
+          git tag -f latest
+          git push origin latest --force
+          gh release create latest \
+            --title "Latest Build" \
+            --prerelease \
+            --notes "$(cat <<'EOF'
+          Automated build from the \`main\` branch — commit \`${{ github.sha }}\`.
+
+          | File | When to use |
+          |------|-------------|
+          | \`merged.bin\` | **Fresh install** — flash with esptool or the [Espressif web flasher](https://espressif.github.io/esptool-js/) at address \`0x0\` |
+          | \`ota.bin\` | **OTA update** — upload via the WiFi Settings page on the device |
+          EOF
+          )" \
+            merged.bin \
+            ota.bin
