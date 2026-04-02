@@ -69,7 +69,7 @@ input[type="number"]:focus,select:focus{outline:none;border-color:#4CAF50}
 </head>
 <body>
 <h1>SendIt Shot Timer</h1>
-<p class="subtitle">Settings &amp; Firmware</p>
+<p class="subtitle">Settings &amp; Firmware &bull; v)" FIRMWARE_VERSION R"(</p>
 
 <details open>
 <summary>Live Fire</summary>

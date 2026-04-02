@@ -4,6 +4,7 @@
 #include <M5StickCPlus2.h>
 #include "config.h" // For enums if needed by display logic, and constants
 
+void displayBootLogo();
 void displayBootScreen(const char* line1a, const char* line1b, const char* line2);
 void displayMenu(const char* title, const char* items[], int count, int selection, int scrollOffset);
 void displayTimingScreen(float elapsedTime, int count, float lastSplit);

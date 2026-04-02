@@ -199,10 +199,13 @@ void setup() {
         a2dp_source.start((char*)currentBluetoothDeviceName.c_str()); 
     }
 
+    displayBootLogo();
+    delay(1000);
+
     StickCP2.Lcd.fillScreen(BLACK);
-    displayBootScreen("SendIt", "Shot Timer", "Initialization Complete!");
-    playSuccessBeeps(); 
-    delay(500); 
+    displayBootScreen("SendIt", "Shot Timer", "v" FIRMWARE_VERSION);
+    playSuccessBeeps();
+    delay(500);
 
     resetActivityTimer();
 

@@ -3,6 +3,9 @@
 
 #include <Arduino.h> // For String, PI etc.
 
+// --- Firmware Version ---
+#define FIRMWARE_VERSION "1.0.0"
+
 // --- Configuration Constants (These are generally safe in headers as const) ---
 const unsigned long LONG_PRESS_DURATION_MS = 750;
 const unsigned long SHOT_REFRACTORY_MS = 150;

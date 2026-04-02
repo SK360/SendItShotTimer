@@ -1,7 +1,15 @@
 #include "display_utils.h"
 #include "globals.h" // Access to global variables
 #include "config.h"  // Access to constants and enums
+#include "logo.h"    // Boot logo image data
 #include <float.h>   // Added for FLT_MAX
+
+void displayBootLogo() {
+    StickCP2.Lcd.fillScreen(BLACK);
+    int x = (StickCP2.Lcd.width() - LOGO_WIDTH) / 2;
+    int y = (StickCP2.Lcd.height() - LOGO_HEIGHT) / 2;
+    StickCP2.Lcd.pushImage(x, y, LOGO_WIDTH, LOGO_HEIGHT, logo);
+}
 
 void displayBootScreen(const char* line1a, const char* line1b, const char* line2) {
     StickCP2.Lcd.fillScreen(BLACK);
