@@ -5,77 +5,58 @@
 #include <float.h>   // Added for FLT_MAX
 
 void displayBootLogo() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    int x = (StickCP2.Lcd.width() - LOGO_WIDTH) / 2;
-    int y = (StickCP2.Lcd.height() - LOGO_HEIGHT) / 2;
-    StickCP2.Lcd.pushImage(x, y, LOGO_WIDTH, LOGO_HEIGHT, logo);
+    M5.Lcd.fillScreen(BLACK);
+    int x = (M5.Lcd.width() - LOGO_WIDTH) / 2;
+    int y = (M5.Lcd.height() - LOGO_HEIGHT) / 2;
+    M5.Lcd.pushImage(x, y, LOGO_WIDTH, LOGO_HEIGHT, logo);
 }
 
 void displayBootScreen(const char* line1a, const char* line1b, const char* line2) {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    StickCP2.Lcd.drawString(line1a, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 - 25);
-    StickCP2.Lcd.drawString(line1b, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 - 5);
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.drawString(line2, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 + 25);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawString(line1a, M5.Lcd.width() / 2, M5.Lcd.height() / 2 - 25);
+    M5.Lcd.drawString(line1b, M5.Lcd.width() / 2, M5.Lcd.height() / 2 - 5);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.drawString(line2, M5.Lcd.width() / 2, M5.Lcd.height() / 2 + 25);
 }
 
 String getUpButtonLabel() {
-    return (StickCP2.Lcd.getRotation() == 3) ? "Top" : "Bottom";
+    return (M5.Lcd.getRotation() == 3) ? "Top" : "Bottom";
 }
 
 String getDownButtonLabel() {
-    return (StickCP2.Lcd.getRotation() == 3) ? "Bottom" : "Top";
+    return (M5.Lcd.getRotation() == 3) ? "Bottom" : "Top";
 }
 
 void displayMenu(const char* title, const char* items[], int count, int selection, int scrollOffset) {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(TC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    StickCP2.Lcd.drawString(title, StickCP2.Lcd.width() / 2, 10);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawString(title, M5.Lcd.width() / 2, 10);
 
     int y_pos = 45;
 
     if (strcmp(title, "Select Mode") == 0) {
-        StickCP2.Lcd.setTextDatum(TR_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(1);
-        int batt_pct = StickCP2.Power.getBatteryLevel();
+        M5.Lcd.setTextDatum(TR_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(1);
+        int batt_pct = M5.Power.getBatteryLevel();
         String statusText = String(batt_pct) + "%";
 
-        if (a2dp_source.is_connected()){
-            statusText = "[B] " + statusText;
-        }
-        StickCP2.Lcd.setTextColor(WHITE, BLACK);
-        StickCP2.Lcd.drawString(statusText, StickCP2.Lcd.width() - 5, 5);
-    }
-    else if (strcmp(title, "Bluetooth Settings") == 0) {
-        StickCP2.Lcd.setTextDatum(TC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(1);
-        String btStatus = "Status: ";
-        if (a2dp_source.is_connected()) {
-            btStatus += "Connected";
-            StickCP2.Lcd.setTextColor(GREEN, BLACK);
-        } else {
-            btStatus += "Disconnected";
-            StickCP2.Lcd.setTextColor(YELLOW, BLACK);
-        }
-        StickCP2.Lcd.drawString(btStatus, StickCP2.Lcd.width() / 2, 30);
-        StickCP2.Lcd.setTextColor(WHITE, BLACK);
-        y_pos = 55;
+        M5.Lcd.setTextColor(WHITE, BLACK);
+        M5.Lcd.drawString(statusText, M5.Lcd.width() - 5, 5);
     }
 
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
-    int rotation = StickCP2.Lcd.getRotation();
+    M5.Lcd.setTextDatum(TL_DATUM);
+    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
     int itemHeight = MENU_ITEM_HEIGHT_LANDSCAPE;
     int textSize = 2;
 
-    StickCP2.Lcd.setTextSize(textSize);
+    M5.Lcd.setTextSize(textSize);
 
     int startIdx = scrollOffset;
     int endIdx = min(scrollOffset + itemsPerScreen, count);
@@ -91,18 +72,14 @@ void displayMenu(const char* title, const char* items[], int count, int selectio
                               strcmp(items[i], "List Files") == 0 ||
                               strcmp(items[i], "Power Off Now") == 0 ||
                               strcmp(items[i], "Beep Settings") == 0 ||
-                              strcmp(items[i], "Bluetooth Settings") == 0 ||
                               strcmp(items[i], "Tone Sweep") == 0 ||
                               strcmp(items[i], "Exit") == 0 ||
                               strcmp(items[i], "WiFi Settings") == 0 ||
                               strcmp(items[i], "Settings") == 0);
 
         bool isParTimeSetting = (settingsMenuLevel == 2 && strncmp(items[i], "Par Time", 8) == 0);
-        bool isBluetoothConnectItem = (settingsMenuLevel == 5 && strcmp(items[i], "Connect") == 0 );
-        bool isBluetoothScanItem = (settingsMenuLevel == 5 && strcmp(items[i], "Scan for Devices") == 0);
-        bool isBluetoothDisconnectItem = (settingsMenuLevel == 5 && strcmp(items[i], "Disconnect") == 0);
 
-        if (settingsMenuLevel > 0 && !isNavOrAction && !isParTimeSetting && !isBluetoothConnectItem && !isBluetoothScanItem && !isBluetoothDisconnectItem) {
+        if (settingsMenuLevel > 0 && !isNavOrAction && !isParTimeSetting) {
             itemText += ": ";
             if (strcmp(items[i], "Max Shots") == 0) { if (currentMaxShots == 0) itemText += "Off"; else itemText += currentMaxShots; }
             else if (strcmp(items[i], "Beep Duration") == 0) itemText += currentBeepDuration;
@@ -115,44 +92,34 @@ void displayMenu(const char* title, const char* items[], int count, int selectio
                 if (autoSleepMinutes == 0) itemText += "Off";
                 else { itemText += autoSleepMinutes; itemText += " min"; }
             }
-
             else if (strcmp(items[i], "UI Sounds") == 0) itemText += (enableUISounds ? "On" : "Off");
+            else if (strcmp(items[i], "Volume") == 0) itemText += currentSpeakerVolume;
             else if (strcmp(items[i], "Shot Timeout") == 0) { if (shotTimeoutMs == 0) itemText += "Off"; else { itemText += (shotTimeoutMs / 1000); itemText += "s"; } }
             else if (strcmp(items[i], "Min 1st Shot") == 0) { itemText += minFirstShotTimeMs; itemText += "ms"; }
             else if (strcmp(items[i], "Post Beep Delay") == 0) { itemText += postBeepDelayMs; itemText += "ms"; }
             else if (strcmp(items[i], "Start Delay Min") == 0) { itemText += startDelayMinMs; itemText += "ms"; }
             else if (strcmp(items[i], "Start Delay Max") == 0) { itemText += startDelayMaxMs; itemText += "ms"; }
-            else if (settingsMenuLevel == 5 && strcmp(items[i], "Auto Reconnect") == 0) {
-                itemText += (currentBluetoothAutoReconnect ? "On" : "Off");
-            }
-            else if (settingsMenuLevel == 5 && strcmp(items[i], "Volume") == 0) {
-                itemText += currentBluetoothVolume;
-            }
-            else if (settingsMenuLevel == 5 && strcmp(items[i], "BT Audio Offset") == 0) { 
-                itemText += currentBluetoothAudioOffsetMs;
-                itemText += "ms";
-            }
         }
 
         if (i == selection) {
-            StickCP2.Lcd.setTextColor(BLACK, WHITE);
-            StickCP2.Lcd.fillRect(5, display_y - 2, StickCP2.Lcd.width() - 10, (textSize == 1 ? 14 : 20), WHITE);
-            StickCP2.Lcd.drawString(itemText, 15, display_y);
-            StickCP2.Lcd.setTextColor(WHITE, BLACK);
+            M5.Lcd.setTextColor(BLACK, WHITE);
+            M5.Lcd.fillRect(5, display_y - 2, M5.Lcd.width() - 10, (textSize == 1 ? 14 : 20), WHITE);
+            M5.Lcd.drawString(itemText, 15, display_y);
+            M5.Lcd.setTextColor(WHITE, BLACK);
         } else {
-            StickCP2.Lcd.drawString(itemText, 15, display_y);
+            M5.Lcd.drawString(itemText, 15, display_y);
         }
     }
 
     if (scrollOffset > 0) {
-        StickCP2.Lcd.fillTriangle(StickCP2.Lcd.width() / 2, y_pos - itemHeight/2 - ( (strcmp(title, "Bluetooth Settings") == 0) ? 5 : 10 ), StickCP2.Lcd.width() / 2 - 5, y_pos - itemHeight/2 - ( (strcmp(title, "Bluetooth Settings") == 0) ? 0 : 5 ), StickCP2.Lcd.width() / 2 + 5, y_pos - itemHeight/2 - ( (strcmp(title, "Bluetooth Settings") == 0) ? 0 : 5 ), WHITE);
+        M5.Lcd.fillTriangle(M5.Lcd.width() / 2, y_pos - itemHeight/2 - 10, M5.Lcd.width() / 2 - 5, y_pos - itemHeight/2 - 5, M5.Lcd.width() / 2 + 5, y_pos - itemHeight/2 - 5, WHITE);
     }
     if (endIdx < count) {
-        StickCP2.Lcd.fillTriangle(StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5, StickCP2.Lcd.width() / 2 - 5, StickCP2.Lcd.height() - 10, StickCP2.Lcd.width() / 2 + 5, StickCP2.Lcd.height() - 10, WHITE);
+        M5.Lcd.fillTriangle(M5.Lcd.width() / 2, M5.Lcd.height() - 5, M5.Lcd.width() / 2 - 5, M5.Lcd.height() - 10, M5.Lcd.width() / 2 + 5, M5.Lcd.height() - 10, WHITE);
     }
 
     drawLowBatteryIndicator();
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextDatum(TL_DATUM);
 }
 
 void displayTimingScreen(float elapsedTime, int count, float lastSplit) {
@@ -160,7 +127,7 @@ void displayTimingScreen(float elapsedTime, int count, float lastSplit) {
     static int prevCount = -1;
     static float prevLastSplit = -1.0f;
     static bool prevLowBattery = false;
-    int rotation = StickCP2.Lcd.getRotation();
+    int rotation = M5.Lcd.getRotation();
 
     bool updateNeeded = redrawMenu ||
                         abs(elapsedTime - prevElapsedTime) > 0.01f ||
@@ -169,22 +136,22 @@ void displayTimingScreen(float elapsedTime, int count, float lastSplit) {
                         lowBatteryWarning != prevLowBattery;
 
     if (redrawMenu) {
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
     }
     if (!updateNeeded && !redrawMenu) {
         return;
     }
 
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(TL_DATUM);
 
     if (redrawMenu || abs(elapsedTime - prevElapsedTime) > 0.01f) {
-        StickCP2.Lcd.setTextFont(7);
-        StickCP2.Lcd.setTextSize(1);
+        M5.Lcd.setTextFont(7);
+        M5.Lcd.setTextSize(1);
         int time_y = 15;
-        StickCP2.Lcd.fillRect(5, time_y, StickCP2.Lcd.width() - 10 , StickCP2.Lcd.fontHeight(7) + 4, BLACK);
-        StickCP2.Lcd.setCursor(10, time_y);
-        StickCP2.Lcd.printf("%.2f", elapsedTime);
+        M5.Lcd.fillRect(5, time_y, M5.Lcd.width() - 10 , M5.Lcd.fontHeight(7) + 4, BLACK);
+        M5.Lcd.setCursor(10, time_y);
+        M5.Lcd.printf("%.2f", elapsedTime);
         prevElapsedTime = elapsedTime;
     }
 
@@ -194,30 +161,30 @@ void displayTimingScreen(float elapsedTime, int count, float lastSplit) {
     int line_h = (text_size == 1) ? 14 : 20;
 
     if (redrawMenu || count != prevCount) {
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(text_size);
-        StickCP2.Lcd.fillRect(10, shots_y, StickCP2.Lcd.width() - 20, line_h, BLACK);
-        StickCP2.Lcd.setCursor(10, shots_y);
-        if (currentMaxShots == 0) StickCP2.Lcd.printf("Shots: %d", count);
-        else StickCP2.Lcd.printf("Shots: %d/%d", count, currentMaxShots);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(text_size);
+        M5.Lcd.fillRect(10, shots_y, M5.Lcd.width() - 20, line_h, BLACK);
+        M5.Lcd.setCursor(10, shots_y);
+        if (currentMaxShots == 0) M5.Lcd.printf("Shots: %d", count);
+        else M5.Lcd.printf("Shots: %d/%d", count, currentMaxShots);
         prevCount = count;
     }
 
     if (redrawMenu || abs(lastSplit - prevLastSplit) > 0.01f || count != prevCount) {
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(text_size);
-        StickCP2.Lcd.fillRect(10, split_y, StickCP2.Lcd.width() - 20, line_h, BLACK);
-        StickCP2.Lcd.setCursor(10, split_y);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(text_size);
+        M5.Lcd.fillRect(10, split_y, M5.Lcd.width() - 20, line_h, BLACK);
+        M5.Lcd.setCursor(10, split_y);
         if (count > 0) {
-            StickCP2.Lcd.printf("Split: %.2fs", lastSplit);
+            M5.Lcd.printf("Split: %.2fs", lastSplit);
         } else {
-            StickCP2.Lcd.print("Split: ---");
+            M5.Lcd.print("Split: ---");
         }
          prevLastSplit = lastSplit;
     }
 
     if (redrawMenu || lowBatteryWarning != prevLowBattery) {
-        StickCP2.Lcd.fillRect(StickCP2.Lcd.width() - 40, 5, 35, 10, BLACK);
+        M5.Lcd.fillRect(M5.Lcd.width() - 40, 5, 35, 10, BLACK);
         drawLowBatteryIndicator();
         prevLowBattery = lowBatteryWarning;
     }
@@ -225,35 +192,35 @@ void displayTimingScreen(float elapsedTime, int count, float lastSplit) {
 }
 
 void displayStoppedScreen() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(TL_DATUM);
     int text_size = 2;
     int line_h = 22;
     int y_pos = 15;
 
-    StickCP2.Lcd.setTextSize(text_size);
+    M5.Lcd.setTextSize(text_size);
 
     if (shotCount > 0) {
         float totalTime = (shotTimestamps[shotCount - 1] - startTime) / 1000.0f;
-        StickCP2.Lcd.setCursor(10, y_pos);
-        StickCP2.Lcd.printf("Total: %.2fs (%d)", totalTime, shotCount);
+        M5.Lcd.setCursor(10, y_pos);
+        M5.Lcd.printf("Total: %.2fs (%d)", totalTime, shotCount);
     } else {
-        StickCP2.Lcd.setCursor(10, y_pos);
-        StickCP2.Lcd.printf("Total Shots: %d", shotCount);
+        M5.Lcd.setCursor(10, y_pos);
+        M5.Lcd.printf("Total Shots: %d", shotCount);
     }
     y_pos += line_h;
 
-    StickCP2.Lcd.setCursor(10, y_pos);
-    if (shotCount > 0) { StickCP2.Lcd.printf("First: %.2fs", splitTimes[0]); }
-    else { StickCP2.Lcd.print("First: ---s"); }
+    M5.Lcd.setCursor(10, y_pos);
+    if (shotCount > 0) { M5.Lcd.printf("First: %.2fs", splitTimes[0]); }
+    else { M5.Lcd.print("First: ---s"); }
     y_pos += line_h;
 
-    StickCP2.Lcd.setCursor(10, y_pos);
-     if (shotCount > 1) { StickCP2.Lcd.printf("Last Split: %.2fs", splitTimes[shotCount - 1]); }
-     else if (shotCount == 1) { StickCP2.Lcd.print("Last Split: N/A"); }
-     else { StickCP2.Lcd.print("Last Split: ---s"); }
+    M5.Lcd.setCursor(10, y_pos);
+     if (shotCount > 1) { M5.Lcd.printf("Last Split: %.2fs", splitTimes[shotCount - 1]); }
+     else if (shotCount == 1) { M5.Lcd.print("Last Split: N/A"); }
+     else { M5.Lcd.print("Last Split: ---s"); }
     y_pos += line_h;
 
     if (shotCount > 1) {
@@ -265,167 +232,165 @@ void displayStoppedScreen() {
                 fastestSplitIndex = i;
             }
         }
-        StickCP2.Lcd.setCursor(10, y_pos);
+        M5.Lcd.setCursor(10, y_pos);
         if(fastestSplitIndex != -1) {
-             StickCP2.Lcd.printf("Fastest: %.2fs (S%d)", fastestSplit, fastestSplitIndex + 1);
+             M5.Lcd.printf("Fastest: %.2fs (S%d)", fastestSplit, fastestSplitIndex + 1);
         } else {
-             StickCP2.Lcd.print("Fastest: N/A");
+             M5.Lcd.print("Fastest: N/A");
         }
         y_pos += line_h;
     } else {
-        StickCP2.Lcd.setCursor(10, y_pos);
-        StickCP2.Lcd.print("Fastest: N/A");
+        M5.Lcd.setCursor(10, y_pos);
+        M5.Lcd.print("Fastest: N/A");
         y_pos += line_h;
     }
 
-    StickCP2.Lcd.setTextDatum(BC_DATUM);
-    StickCP2.Lcd.setTextSize(1);
+    M5.Lcd.setTextDatum(BC_DATUM);
+    M5.Lcd.setTextSize(1);
     if (shotCount > 0) {
-        StickCP2.Lcd.drawString("Scroll=Shots / Front=Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+        M5.Lcd.drawString("Scroll=Shots / Front=Reset", M5.Lcd.width() / 2, M5.Lcd.height() - 5);
     } else {
-        StickCP2.Lcd.drawString("Press Front to Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+        M5.Lcd.drawString("Press Front to Reset", M5.Lcd.width() / 2, M5.Lcd.height() - 5);
     }
     drawLowBatteryIndicator();
 }
 
 void displayShotReviewScreen(int index) {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextColor(WHITE, BLACK);
     int text_size = 2;
     int line_h = 22;
 
     // Title
-    StickCP2.Lcd.setTextDatum(TC_DATUM);
-    StickCP2.Lcd.setTextSize(text_size);
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.setTextSize(text_size);
     char title[20];
     snprintf(title, sizeof(title), "Shot %d / %d", index + 1, shotCount);
-    StickCP2.Lcd.drawString(title, StickCP2.Lcd.width() / 2, 10);
+    M5.Lcd.drawString(title, M5.Lcd.width() / 2, 10);
 
     // Shot time from buzzer
     int y_pos = 10 + line_h + 8;
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
-    StickCP2.Lcd.setTextSize(text_size);
+    M5.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextSize(text_size);
 
     float timeFromStart = (shotTimestamps[index] - startTime) / 1000.0f;
-    StickCP2.Lcd.setCursor(10, y_pos);
-    StickCP2.Lcd.printf("Time: %.2fs", timeFromStart);
+    M5.Lcd.setCursor(10, y_pos);
+    M5.Lcd.printf("Time: %.2fs", timeFromStart);
     y_pos += line_h;
 
     // Split time
-    StickCP2.Lcd.setCursor(10, y_pos);
+    M5.Lcd.setCursor(10, y_pos);
     if (index == 0) {
-        StickCP2.Lcd.printf("Draw: %.2fs", splitTimes[0]);
+        M5.Lcd.printf("Draw: %.2fs", splitTimes[0]);
     } else {
-        StickCP2.Lcd.printf("Split: %.2fs", splitTimes[index]);
+        M5.Lcd.printf("Split: %.2fs", splitTimes[index]);
     }
 
     // Navigation hint
-    StickCP2.Lcd.setTextDatum(BC_DATUM);
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.drawString("Scroll=Shots / Front=Reset", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+    M5.Lcd.setTextDatum(BC_DATUM);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.drawString("Scroll=Shots / Front=Reset", M5.Lcd.width() / 2, M5.Lcd.height() - 5);
     drawLowBatteryIndicator();
 }
 
 void displayEditScreen() {
     if (!redrawMenu) {
-         StickCP2.Lcd.fillRect(0, StickCP2.Lcd.height()/2 - 25, StickCP2.Lcd.width(), 50, BLACK);
+         M5.Lcd.fillRect(0, M5.Lcd.height()/2 - 25, M5.Lcd.width(), 50, BLACK);
     } else {
-        StickCP2.Lcd.fillScreen(BLACK);
-        StickCP2.Lcd.setTextDatum(TC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(2);
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.setTextDatum(TC_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(2);
         if (settingBeingEdited == EDIT_PAR_TIME_ARRAY) {
              String titleStr = "Par Time " + String(editingIntValue + 1);
-             StickCP2.Lcd.drawString(titleStr, StickCP2.Lcd.width() / 2, 15);
+             M5.Lcd.drawString(titleStr, M5.Lcd.width() / 2, 15);
         } else {
-            StickCP2.Lcd.drawString(editingSettingName, StickCP2.Lcd.width() / 2, 15);
+            M5.Lcd.drawString(editingSettingName, M5.Lcd.width() / 2, 15);
         }
-        StickCP2.Lcd.setTextDatum(BC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(1);
-        if (settingBeingEdited == EDIT_ROTATION || settingBeingEdited == EDIT_BT_AUTO_RECONNECT || settingBeingEdited == EDIT_UI_SOUNDS) {
-            StickCP2.Lcd.drawString(getUpButtonLabel() + " or " + getDownButtonLabel() + " = Toggle", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 25);
+        M5.Lcd.setTextDatum(BC_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(1);
+        if (settingBeingEdited == EDIT_ROTATION || settingBeingEdited == EDIT_UI_SOUNDS) {
+            M5.Lcd.drawString(getUpButtonLabel() + " or " + getDownButtonLabel() + " = Toggle", M5.Lcd.width() / 2, M5.Lcd.height() - 25);
         } else {
-            StickCP2.Lcd.drawString(getUpButtonLabel() + "=Up / " + getDownButtonLabel() + "=Down", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 25);
+            M5.Lcd.drawString(getUpButtonLabel() + "=Up / " + getDownButtonLabel() + "=Down", M5.Lcd.width() / 2, M5.Lcd.height() - 25);
         }
-        StickCP2.Lcd.drawString("Press=OK / Hold=Cancel", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 10);
+        M5.Lcd.drawString("Press=OK / Hold=Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
     }
 
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextDatum(MC_DATUM);
 
     switch(settingBeingEdited) {
         case EDIT_MAX_SHOTS:
              if (editingIntValue == 0) {
-                 StickCP2.Lcd.setTextFont(4); StickCP2.Lcd.setTextSize(1);
-                 StickCP2.Lcd.drawString("Off", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.setTextFont(4); M5.Lcd.setTextSize(1);
+                 M5.Lcd.drawString("Off", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              } else {
-                 StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-                 StickCP2.Lcd.drawNumber(editingIntValue, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+                 M5.Lcd.drawNumber(editingIntValue, M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              }
              break;
         case EDIT_SHOT_TIMEOUT:
              if (editingIntValue == 0) {
-                 StickCP2.Lcd.setTextFont(4); StickCP2.Lcd.setTextSize(1);
-                 StickCP2.Lcd.drawString("Off", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.setTextFont(4); M5.Lcd.setTextSize(1);
+                 M5.Lcd.drawString("Off", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              } else {
-                 StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-                 StickCP2.Lcd.drawNumber(editingIntValue / 1000, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
-                 StickCP2.Lcd.setTextFont(0); StickCP2.Lcd.setTextSize(1);
-                 StickCP2.Lcd.drawString("s", StickCP2.Lcd.width() / 2 + StickCP2.Lcd.textWidth(String(editingIntValue / 1000))/2 + 15, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+                 M5.Lcd.drawNumber(editingIntValue / 1000, M5.Lcd.width() / 2, M5.Lcd.height() / 2);
+                 M5.Lcd.setTextFont(0); M5.Lcd.setTextSize(1);
+                 M5.Lcd.drawString("s", M5.Lcd.width() / 2 + M5.Lcd.textWidth(String(editingIntValue / 1000))/2 + 15, M5.Lcd.height() / 2);
              }
              break;
         case EDIT_ROTATION:
-             StickCP2.Lcd.setTextFont(4); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawString(editingIntValue == 1 ? "Right Hand" : "Left Hand", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+             M5.Lcd.setTextFont(4); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawString(editingIntValue == 1 ? "Right Hand" : "Left Hand", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              break;
         case EDIT_BEEP_TONE:
         case EDIT_SHOT_THRESHOLD:
         case EDIT_PAR_BEEP_COUNT:
-        case EDIT_BT_VOLUME:
-        case EDIT_BT_AUDIO_OFFSET: 
+        case EDIT_SPEAKER_VOLUME:
         case EDIT_MIN_FIRST_SHOT:
         case EDIT_POST_BEEP_DELAY:
         case EDIT_START_DELAY_MIN:
         case EDIT_START_DELAY_MAX:
         case EDIT_TONE_SWEEP:
-             StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawNumber(editingIntValue, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
-             if (settingBeingEdited == EDIT_BT_AUDIO_OFFSET || settingBeingEdited == EDIT_MIN_FIRST_SHOT || settingBeingEdited == EDIT_POST_BEEP_DELAY ||
+             M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawNumber(editingIntValue, M5.Lcd.width() / 2, M5.Lcd.height() / 2);
+             if (settingBeingEdited == EDIT_MIN_FIRST_SHOT || settingBeingEdited == EDIT_POST_BEEP_DELAY ||
                  settingBeingEdited == EDIT_START_DELAY_MIN || settingBeingEdited == EDIT_START_DELAY_MAX) {
-                StickCP2.Lcd.setTextFont(0); StickCP2.Lcd.setTextSize(1); 
-                StickCP2.Lcd.drawString("ms", StickCP2.Lcd.width() / 2 + StickCP2.Lcd.textWidth(String(editingIntValue))/2 + 15, StickCP2.Lcd.height() / 2);
+                M5.Lcd.setTextFont(0); M5.Lcd.setTextSize(1);
+                M5.Lcd.drawString("ms", M5.Lcd.width() / 2 + M5.Lcd.textWidth(String(editingIntValue))/2 + 15, M5.Lcd.height() / 2);
              }
-             if (settingBeingEdited == EDIT_TONE_SWEEP) { 
-                StickCP2.Lcd.setTextFont(0); StickCP2.Lcd.setTextSize(1); 
-                StickCP2.Lcd.drawString("Hz", StickCP2.Lcd.width() / 2 + StickCP2.Lcd.textWidth(String(editingIntValue))/2 + 15, StickCP2.Lcd.height() / 2);
+             if (settingBeingEdited == EDIT_TONE_SWEEP) {
+                M5.Lcd.setTextFont(0); M5.Lcd.setTextSize(1);
+                M5.Lcd.drawString("Hz", M5.Lcd.width() / 2 + M5.Lcd.textWidth(String(editingIntValue))/2 + 15, M5.Lcd.height() / 2);
              }
              break;
         case EDIT_BEEP_DURATION:
-             StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawNumber(editingULongValue, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+             M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawNumber(editingULongValue, M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              break;
         case EDIT_PAR_TIME_ARRAY:
         case EDIT_RECOIL_THRESHOLD:
-             StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawFloat(editingFloatValue, 1, StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+             M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawFloat(editingFloatValue, 1, M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              break;
         case EDIT_AUTO_SLEEP:
-             StickCP2.Lcd.setTextFont(4); StickCP2.Lcd.setTextSize(1);
+             M5.Lcd.setTextFont(4); M5.Lcd.setTextSize(1);
              if (editingIntValue == 0) {
-                 StickCP2.Lcd.drawString("Off", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.drawString("Off", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              } else {
-                 StickCP2.Lcd.drawString(String(editingIntValue) + " min", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+                 M5.Lcd.drawString(String(editingIntValue) + " min", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              }
              break;
-        case EDIT_BT_AUTO_RECONNECT:
         case EDIT_UI_SOUNDS:
-             StickCP2.Lcd.setTextFont(4); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawString(editingBoolValue ? "On" : "Off", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+             M5.Lcd.setTextFont(4); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawString(editingBoolValue ? "On" : "Off", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              break;
         default:
-             StickCP2.Lcd.setTextFont(7); StickCP2.Lcd.setTextSize(1);
-             StickCP2.Lcd.drawString("ERROR", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+             M5.Lcd.setTextFont(7); M5.Lcd.setTextSize(1);
+             M5.Lcd.drawString("ERROR", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
              break;
     }
     drawLowBatteryIndicator();
@@ -433,195 +398,116 @@ void displayEditScreen() {
 
 void displayCalibrationScreen(const char* title, float peakValue, const char* unit) {
     if (redrawMenu) { 
-        StickCP2.Lcd.fillScreen(BLACK);
-        StickCP2.Lcd.setTextDatum(TC_DATUM); StickCP2.Lcd.setTextFont(0); StickCP2.Lcd.setTextSize(2);
-        StickCP2.Lcd.drawString(title, StickCP2.Lcd.width() / 2, 10);
-        StickCP2.Lcd.setTextDatum(BC_DATUM); StickCP2.Lcd.setTextFont(0); StickCP2.Lcd.setTextSize(1);
-        StickCP2.Lcd.drawString("Press Front=Save Peak", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 25);
-        StickCP2.Lcd.drawString("Hold Front=Cancel", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 10);
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.setTextDatum(TC_DATUM); M5.Lcd.setTextFont(0); M5.Lcd.setTextSize(2);
+        M5.Lcd.drawString(title, M5.Lcd.width() / 2, 10);
+        M5.Lcd.setTextDatum(BC_DATUM); M5.Lcd.setTextFont(0); M5.Lcd.setTextSize(1);
+        M5.Lcd.drawString("Press Front=Save Peak", M5.Lcd.width() / 2, M5.Lcd.height() - 25);
+        M5.Lcd.drawString("Hold Front=Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
         if (currentState == CALIBRATE_RECOIL) {
-             StickCP2.Lcd.drawString("Trigger Recoil", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()-45);
+             M5.Lcd.drawString("Trigger Recoil", M5.Lcd.width()/2, M5.Lcd.height()-45);
         }
     } else { 
-        StickCP2.Lcd.fillRect(0, StickCP2.Lcd.height() / 2 - 25, StickCP2.Lcd.width(), 50, BLACK);
+        M5.Lcd.fillRect(0, M5.Lcd.height() / 2 - 25, M5.Lcd.width(), 50, BLACK);
     }
 
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(1);
-    StickCP2.Lcd.setTextSize(3);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(1);
+    M5.Lcd.setTextSize(3);
     String peakStr = "PEAK: " + String(peakValue, (currentState == CALIBRATE_RECOIL ? 2 : 0)); 
-    StickCP2.Lcd.drawString(peakStr, StickCP2.Lcd.width() / 2, (StickCP2.Lcd.height()/2));
+    M5.Lcd.drawString(peakStr, M5.Lcd.width() / 2, (M5.Lcd.height()/2));
     drawLowBatteryIndicator(); 
 }
 
 
 void displayDeviceStatusScreen() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(TC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    StickCP2.Lcd.drawString("Device Status", StickCP2.Lcd.width() / 2, 10);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawString("Device Status", M5.Lcd.width() / 2, 10);
 
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
-    StickCP2.Lcd.setTextSize(1);
+    M5.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextSize(1);
     int y_pos = 35;
     int line_h = 12;
 
-    float batt_v = StickCP2.Power.getBatteryVoltage() / 1000.0f;
-    int batt_pct = StickCP2.Power.getBatteryLevel();
-    bool charging = StickCP2.Power.isCharging();
+    float batt_v = M5.Power.getBatteryVoltage() / 1000.0f;
+    int batt_pct = M5.Power.getBatteryLevel();
+    bool charging = M5.Power.isCharging();
 
-    StickCP2.Lcd.setCursor(10, y_pos);
-    StickCP2.Lcd.printf("Batt: %.2fV (%d%%) %s", batt_v, batt_pct, charging ? "Chg" : "");
+    M5.Lcd.setCursor(10, y_pos);
+    M5.Lcd.printf("Batt: %.2fV (%d%%) %s", batt_v, batt_pct, charging ? "Chg" : "");
     y_pos += line_h;
-    StickCP2.Lcd.setCursor(10, y_pos);
-    StickCP2.Lcd.printf("Peak V: %.2fV", peakBatteryVoltage);
+    M5.Lcd.setCursor(10, y_pos);
+    M5.Lcd.printf("Peak V: %.2fV", peakBatteryVoltage);
     y_pos += line_h + 5;
 
     float accX, accY, accZ, gyroX, gyroY, gyroZ, temp;
-    StickCP2.Imu.getAccelData(&accX, &accY, &accZ);
+    M5.Imu.getAccelData(&accX, &accY, &accZ);
 
-    StickCP2.Lcd.setCursor(10, y_pos);
-    StickCP2.Lcd.print("IMU Acc (G):");
+    M5.Lcd.setCursor(10, y_pos);
+    M5.Lcd.print("IMU Acc (G):");
     y_pos += line_h;
-    StickCP2.Lcd.setCursor(15, y_pos);
-    StickCP2.Lcd.printf("X:%.2f, Y:%.2f, Z:%.2f", accX, accY, accZ);
+    M5.Lcd.setCursor(15, y_pos);
+    M5.Lcd.printf("X:%.2f, Y:%.2f, Z:%.2f", accX, accY, accZ);
     y_pos += line_h + 5;
 
     y_pos += line_h;
 
-    StickCP2.Lcd.setTextDatum(BC_DATUM);
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.drawString("Hold Front to Return", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 10);
+    M5.Lcd.setTextDatum(BC_DATUM);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.drawString("Hold Front to Return", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
     drawLowBatteryIndicator();
 }
 
 void displayDryFireReadyScreen() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    StickCP2.Lcd.drawString("Dry Fire Par", StickCP2.Lcd.width() / 2, 30);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawString("Dry Fire Par", M5.Lcd.width() / 2, 30);
 
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.drawString("Press Front to Start", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 + 10);
-    StickCP2.Lcd.drawString("Hold Top/Front=Exit", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 20);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.drawString("Press Front to Start", M5.Lcd.width() / 2, M5.Lcd.height() / 2 + 10);
+    M5.Lcd.drawString("Hold Top/Front=Exit", M5.Lcd.width() / 2, M5.Lcd.height() - 20);
     drawLowBatteryIndicator();
 }
 
 void displayDryFireRunningScreen(bool waiting, int beepNum, int totalBeeps) {
     if (!redrawMenu) return; 
 
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(0);
 
     if (waiting) {
-        StickCP2.Lcd.setTextSize(3);
-        StickCP2.Lcd.drawString("Waiting...", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+        M5.Lcd.setTextSize(3);
+        M5.Lcd.drawString("Waiting...", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
     } else {
-        StickCP2.Lcd.setTextSize(7);
-        StickCP2.Lcd.drawString(String(beepNum), StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 - 10);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(1);
-        StickCP2.Lcd.drawString("Beep / " + String(totalBeeps), StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 + 35);
+        M5.Lcd.setTextSize(7);
+        M5.Lcd.drawString(String(beepNum), M5.Lcd.width() / 2, M5.Lcd.height() / 2 - 10);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(1);
+        M5.Lcd.drawString("Beep / " + String(totalBeeps), M5.Lcd.width() / 2, M5.Lcd.height() / 2 + 35);
     }
 
-    StickCP2.Lcd.setTextDatum(BC_DATUM);
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.drawString("Hold Top/Front=Cancel", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 10);
+    M5.Lcd.setTextDatum(BC_DATUM);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.drawString("Hold Top/Front=Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
     drawLowBatteryIndicator();
     redrawMenu = false; 
 }
 
 void drawLowBatteryIndicator() {
     if (lowBatteryWarning) {
-        StickCP2.Lcd.setTextDatum(TR_DATUM); 
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(1);
-        StickCP2.Lcd.setTextColor(RED, BLACK);
-        StickCP2.Lcd.drawString("(Bat)", StickCP2.Lcd.width() - 5, 5); 
-        StickCP2.Lcd.setTextColor(WHITE, BLACK); 
-        StickCP2.Lcd.setTextDatum(TL_DATUM); 
+        M5.Lcd.setTextDatum(TR_DATUM); 
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(1);
+        M5.Lcd.setTextColor(RED, BLACK);
+        M5.Lcd.drawString("(Bat)", M5.Lcd.width() - 5, 5); 
+        M5.Lcd.setTextColor(WHITE, BLACK); 
+        M5.Lcd.setTextDatum(TL_DATUM); 
     }
 }
 
-void displayBluetoothScanResults() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextDatum(TC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    // Dynamically change title based on scan state
-    if (scanInProgress) {
-        StickCP2.Lcd.drawString("Scanning...", StickCP2.Lcd.width() / 2, 10);
-    } else {
-        StickCP2.Lcd.drawString("Scan Results", StickCP2.Lcd.width() / 2, 10);
-    }
-    
-
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
-    int y_pos = 35;
-    int itemsPerScreen = MENU_ITEMS_PER_SCREEN_PORTRAIT + 2;
-    int itemHeight = MENU_ITEM_HEIGHT_PORTRAIT - 3;
-    int textSize = 1;
-
-    StickCP2.Lcd.setTextSize(textSize);
-
-    if (discoveredBtDevices.empty() && !scanInProgress) { // Show "No devices" only if scan is finished
-        StickCP2.Lcd.setTextDatum(MC_DATUM);
-        StickCP2.Lcd.drawString("No devices found.", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
-        StickCP2.Lcd.drawString("Hold Front to go Back.", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 + 15);
-         StickCP2.Lcd.setTextDatum(TL_DATUM); 
-    } else {
-        int startIdx = scanMenuScrollOffset;
-        int endIdx = min((int)(scanMenuScrollOffset + itemsPerScreen), (int)discoveredBtDevices.size());
-
-        for (int i = startIdx; i < endIdx; ++i) {
-            if (i >= discoveredBtDevices.size()) break;
-
-            int display_y = y_pos + (i - startIdx) * itemHeight;
-            String deviceName = discoveredBtDevices[i].name;
-            if (deviceName.isEmpty()) {
-                deviceName = discoveredBtDevices[i].address; // Fallback to address
-            }
-            int maxDisplayChars = (StickCP2.Lcd.width() - 20) / 6; 
-            if (deviceName.length() > maxDisplayChars && maxDisplayChars > 3) { 
-                 deviceName = deviceName.substring(0, maxDisplayChars - 3) + "...";
-            }
-
-            if (i == scanMenuSelection) {
-                StickCP2.Lcd.setTextColor(BLACK, WHITE);
-                StickCP2.Lcd.fillRect(5, display_y - 2, StickCP2.Lcd.width() - 10, itemHeight + 1 , WHITE);
-                StickCP2.Lcd.drawString(deviceName, 10, display_y);
-                StickCP2.Lcd.setTextColor(WHITE, BLACK);
-            } else {
-                StickCP2.Lcd.drawString(deviceName, 10, display_y);
-            }
-        }
-        
-        // Show instructions only when scan is finished
-        if (!scanInProgress) {
-            StickCP2.Lcd.setTextDatum(BC_DATUM);
-            StickCP2.Lcd.setTextSize(1);
-            StickCP2.Lcd.drawString("Press=Connect / Hold=Back", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
-            StickCP2.Lcd.setTextDatum(TL_DATUM); 
-        } else {
-             // Optionally show different text while scanning, e.g., "Scanning... Hold=Cancel"
-            StickCP2.Lcd.setTextDatum(BC_DATUM);
-            StickCP2.Lcd.setTextSize(1);
-            StickCP2.Lcd.drawString("Scanning... Hold=Cancel", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
-            StickCP2.Lcd.setTextDatum(TL_DATUM); 
-        }
-    }
-
-    // Scroll indicators
-    if (scanMenuScrollOffset > 0) {
-        StickCP2.Lcd.fillTriangle(StickCP2.Lcd.width() / 2, 28, StickCP2.Lcd.width() / 2 - 4, 33, StickCP2.Lcd.width() / 2 + 4, 33, WHITE);
-    }
-    if (scanMenuScrollOffset + itemsPerScreen < discoveredBtDevices.size() && !discoveredBtDevices.empty()) {
-        StickCP2.Lcd.fillTriangle(StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 15, StickCP2.Lcd.width() / 2 - 4, StickCP2.Lcd.height() - 20, StickCP2.Lcd.width() / 2 + 4, StickCP2.Lcd.height() - 20, WHITE);
-    }
-
-    drawLowBatteryIndicator();
-    StickCP2.Lcd.setTextDatum(TL_DATUM); 
-}

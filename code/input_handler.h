@@ -1,7 +1,7 @@
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
 
-#include <M5StickCPlus2.h>
+#include <M5Unified.h>
 #include "config.h" // For TimerState enum
 
 void handleModeSelectionInput();

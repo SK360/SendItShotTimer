@@ -11,7 +11,7 @@ void resetShotData() {
     lastDetectionTime = 0;
     currentCyclePeakRMS = 0.0f;
     peakRMSOverall = 0.0f;
-    micPeakRMS.resetPeak();
+    resetMicPeak();
     checkingForRecoil = false;
     lastSoundPeakTime = 0;
     for (int i = 0; i < MAX_SHOTS_LIMIT; ++i) {
@@ -25,15 +25,15 @@ void handleLiveFireReady() {
         displayTimingScreen(0.0, 0, 0.0);
         redrawMenu = false;
     }
-    if (StickCP2.BtnA.wasClicked()) {
+    if (M5.BtnA.wasClicked()) {
         resetActivityTimer();
-        reset_bt_beep_state();
+        
         is_listening_active = false;
-        StickCP2.Lcd.fillScreen(BLACK);
-        StickCP2.Lcd.setTextDatum(MC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(3);
-        StickCP2.Lcd.drawString("Ready...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.setTextDatum(MC_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(3);
+        M5.Lcd.drawString("Ready...", M5.Lcd.width()/2, M5.Lcd.height()/2);
         delay(1000);
         randomSeed(micros());
         unsigned long randomDelay = random(startDelayMinMs, startDelayMaxMs + 1);
@@ -45,10 +45,10 @@ void handleLiveFireReady() {
 
 void handleLiveFireGetReady() {
     if (liveFireWaitingForDelay) {
-        if (StickCP2.BtnA.wasClicked()) {
+        if (M5.BtnA.wasClicked()) {
             liveFireWaitingForDelay = false;
             setState(LIVE_FIRE_READY);
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             playUnsuccessBeeps();
             return;
         }
@@ -63,24 +63,13 @@ void handleLiveFireGetReady() {
     
     // Calculate when the audio output (whichever is active) is expected to finish.
     // If BT connected, consider offset and duration. If buzzer, consider duration.
-    unsigned long audioDuration = currentBeepDuration;
-    unsigned long audioStartTime = beepInitiationTime; // Buzzer starts now
-    if (a2dp_source.is_connected()) {
-        audioStartTime = beepInitiationTime + currentBluetoothAudioOffsetMs; // BT starts later/earlier
-    }
-    // Use max to handle negative offsets correctly for end time calculation
-    beep_audio_end_time = max(beepInitiationTime, audioStartTime) + audioDuration + 150; // Add 150ms buffer
-
-    is_listening_active = false; // Don't listen until beep is finished
-
-    // Set timer start time relative to beep initiation + standard delay
-    startTime = beepInitiationTime + postBeepDelayMs; 
-    
-    delay(postBeepDelayMs); // Wait for the standard post-beep delay
-    
-    resetShotData(); 
+    beep_audio_end_time = beepInitiationTime + currentBeepDuration + 150;
+    is_listening_active = false;
+    startTime = beepInitiationTime + postBeepDelayMs;
+    delay(postBeepDelayMs);
+    resetShotData();
     lastDisplayUpdateTime = 0;
-    StickCP2.Lcd.fillScreen(BLACK);
+    M5.Lcd.fillScreen(BLACK);
     setState(LIVE_FIRE_TIMING);
 }
 
@@ -95,7 +84,7 @@ void handleLiveFireTiming() {
         // AND ensure the timer has actually started (passed postBeepDelayMs)
         if (currentTime >= beep_audio_end_time && currentTime >= startTime) { 
             is_listening_active = true;
-            micPeakRMS.resetPeak(); // Reset peak *just* as listening starts
+            resetMicPeak(); // Reset peak *just* as listening starts
         } else {
             // Still waiting for beep audio to finish or for startTime, don't process mic input
              if (redrawMenu || currentTime - lastDisplayUpdateTime >= DISPLAY_UPDATE_INTERVAL_MS) {
@@ -112,8 +101,8 @@ void handleLiveFireTiming() {
     // --- Listening is Active ---
     float currentElapsedTime = (startTime > 0 && currentTime > startTime) ? (currentTime - startTime) / 1000.0f : 0.0f;
     
-    micPeakRMS.update(); 
-    currentCyclePeakRMS = micPeakRMS.getPeakRMS(); 
+    updateMic(); 
+    currentCyclePeakRMS = getMicPeak(); 
 
     if (currentCyclePeakRMS > peakRMSOverall) {
         peakRMSOverall = currentCyclePeakRMS;
@@ -155,7 +144,7 @@ void handleLiveFireTiming() {
         if (currentMaxShots > 0 && shotCount >= currentMaxShots) {
             is_listening_active = false;
             setState(LIVE_FIRE_STOPPED);
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             displayStoppedScreen();
             if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
         }
@@ -163,16 +152,16 @@ void handleLiveFireTiming() {
     } 
     // Reset peak at the end of the active listening cycle if no shot was detected
     else if (is_listening_active) { 
-         micPeakRMS.resetPeak(); 
+         resetMicPeak(); 
     }
 
 
     // Manual Stop
-    if (currentState == LIVE_FIRE_TIMING && StickCP2.BtnA.wasClicked()) {
+    if (currentState == LIVE_FIRE_TIMING && M5.BtnA.wasClicked()) {
         resetActivityTimer();
         is_listening_active = false; 
         setState(LIVE_FIRE_STOPPED);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         displayStoppedScreen();
         if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
     }
@@ -184,7 +173,7 @@ void handleLiveFireTiming() {
         if (hasStarted && timeSinceEvent > (unsigned long)shotTimeoutMs) {
             is_listening_active = false; 
             setState(LIVE_FIRE_STOPPED);
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             displayStoppedScreen();
             if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
         }
@@ -199,17 +188,17 @@ void handleDryFireReadyInput() {
         redrawMenu = false;
     }
 
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
         setState(MODE_SELECTION);
         currentMenuSelection = (int)MODE_DRY_FIRE;
         int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
         menuScrollOffset = max(0, currentMenuSelection - itemsPerScreen + 1);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         return;
     }
 
-    if (StickCP2.BtnA.wasClicked()) {
-        reset_bt_beep_state(); 
+    if (M5.BtnA.wasClicked()) {
+         
         randomSeed(micros());
         unsigned long randomDelay = random(DRY_FIRE_RANDOM_DELAY_MIN_MS, DRY_FIRE_RANDOM_DELAY_MAX_MS + 1);
 
@@ -229,8 +218,8 @@ void handleDryFireRunning() {
     resetActivityTimer();
     unsigned long currentTime = millis();
 
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
-        reset_bt_beep_state(); 
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+         
         setState(DRY_FIRE_READY);
         playUnsuccessBeeps();
         redrawMenu = true; 
@@ -264,7 +253,7 @@ void handleDryFireRunning() {
             displayDryFireRunningScreen(false, beepsPlayed, dryFireParBeepCount);
          }
         if (beepsPlayed >= dryFireParBeepCount) {
-            reset_bt_beep_state(); 
+             
             setState(DRY_FIRE_READY);
             delay(500); 
             redrawMenu = true;
@@ -301,23 +290,23 @@ void handleNoisyRangeReadyInput() {
         displayTimingScreen(0.0f, 0, 0.0f);
         redrawMenu = false;
     }
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
         setState(MODE_SELECTION);
         currentMenuSelection = (int)MODE_NOISY_RANGE;
         int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
         menuScrollOffset = max(0, currentMenuSelection - itemsPerScreen + 1);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         return;
     }
-    if (StickCP2.BtnA.wasClicked()) {
-        reset_bt_beep_state(); 
+    if (M5.BtnA.wasClicked()) {
+         
         is_listening_active = false; 
         setState(NOISY_RANGE_GET_READY);
-        StickCP2.Lcd.fillScreen(BLACK);
-        StickCP2.Lcd.setTextDatum(MC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(3);
-        StickCP2.Lcd.drawString("Ready...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.setTextDatum(MC_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(3);
+        M5.Lcd.drawString("Ready...", M5.Lcd.width()/2, M5.Lcd.height()/2);
         delay(1000);
     }
 }
@@ -328,21 +317,16 @@ void handleNoisyRangeGetReady() {
     playTone(currentBeepToneHz, currentBeepDuration);
     
     // Calculate when the audio (BT or Buzzer) is expected to finish
-    unsigned long audioDuration = currentBeepDuration;
-    unsigned long audioStartTime = beepInitiationTime; // Buzzer starts now
-    if (a2dp_source.is_connected()) {
-        audioStartTime = beepInitiationTime + currentBluetoothAudioOffsetMs; // BT starts later/earlier
-    }
-    beep_audio_end_time = max(beepInitiationTime, audioStartTime) + audioDuration + 150; // Increased buffer
-    is_listening_active = false; 
+    beep_audio_end_time = beepInitiationTime + currentBeepDuration + 150;
+    is_listening_active = false;
 
-    startTime = beepInitiationTime + postBeepDelayMs; 
+    startTime = beepInitiationTime + postBeepDelayMs;
 
-    delay(postBeepDelayMs); 
-    
+    delay(postBeepDelayMs);
+
     resetShotData();
     lastDisplayUpdateTime = 0;
-    StickCP2.Lcd.fillScreen(BLACK);
+    M5.Lcd.fillScreen(BLACK);
     setState(NOISY_RANGE_TIMING);
     redrawMenu = true; 
 }
@@ -357,7 +341,7 @@ void handleNoisyRangeTiming() {
      if (!is_listening_active) {
         if (currentTime >= beep_audio_end_time && currentTime >= startTime) {
             is_listening_active = true;
-            micPeakRMS.resetPeak(); // Start listening clean
+            resetMicPeak(); // Start listening clean
         } else {
             // Still waiting for beep audio to finish or for startTime, don't process mic/IMU
              if (redrawMenu || currentTime - lastDisplayUpdateTime >= DISPLAY_UPDATE_INTERVAL_MS) {
@@ -380,8 +364,8 @@ void handleNoisyRangeTiming() {
         redrawMenu = false;
     }
 
-    micPeakRMS.update(); // Update mic only when listening
-    currentCyclePeakRMS = micPeakRMS.getPeakRMS();
+    updateMic(); // Update mic only when listening
+    currentCyclePeakRMS = getMicPeak();
 
     if (!checkingForRecoil &&
         currentCyclePeakRMS > shotThresholdRms &&
@@ -397,7 +381,7 @@ void handleNoisyRangeTiming() {
     }
 
     if (checkingForRecoil) {
-        StickCP2.Imu.getAccelData(&accX, &accY, &accZ);
+        M5.Imu.getAccelData(&accX, &accY, &accZ);
         float currentRecoil = abs(accZ);
 
         if (currentRecoil > recoilThreshold) {
@@ -419,12 +403,12 @@ void handleNoisyRangeTiming() {
 
             checkingForRecoil = false; 
             lastSoundPeakTime = 0;
-            micPeakRMS.resetPeak(); // Reset peak after successful shot registration
+            resetMicPeak(); // Reset peak after successful shot registration
 
             if (currentMaxShots > 0 && shotCount >= currentMaxShots) {
                 is_listening_active = false;
                 setState(LIVE_FIRE_STOPPED);
-                StickCP2.Lcd.fillScreen(BLACK);
+                M5.Lcd.fillScreen(BLACK);
                 displayStoppedScreen();
                 if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
                 return;
@@ -433,18 +417,18 @@ void handleNoisyRangeTiming() {
         else if (currentTime - lastSoundPeakTime > RECOIL_DETECTION_WINDOW_MS) {
             checkingForRecoil = false; 
             lastSoundPeakTime = 0;
-            micPeakRMS.resetPeak(); // Reset peak if recoil window expired (false alarm)
+            resetMicPeak(); // Reset peak if recoil window expired (false alarm)
         }
     } else if (is_listening_active) { // Reset peak if not checking recoil and listening is active
-         micPeakRMS.resetPeak(); 
+         resetMicPeak(); 
     }
 
     // Manual Stop
-    if (currentState == NOISY_RANGE_TIMING && StickCP2.BtnA.wasClicked()) {
+    if (currentState == NOISY_RANGE_TIMING && M5.BtnA.wasClicked()) {
         resetActivityTimer();
         is_listening_active = false;
         setState(LIVE_FIRE_STOPPED); 
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         displayStoppedScreen();
         if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
         return; 
@@ -457,7 +441,7 @@ void handleNoisyRangeTiming() {
         if (hasStarted && timeSinceEvent > (unsigned long)shotTimeoutMs) {
             is_listening_active = false;
             setState(LIVE_FIRE_STOPPED); 
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             displayStoppedScreen();
             if (shotCount > 0) playSuccessBeeps(); else playUnsuccessBeeps();
         }

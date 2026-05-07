@@ -1,14 +1,11 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include <M5StickCPlus2.h>
-#include "M5MicPeakRMS.h"
-#include "BluetoothA2DPSource.h"
-#include <ESP32BluetoothScanner.h>
+#include <M5Unified.h>
 #include <vector>
 #include <Preferences.h>
-#include "config.h" // For enum types and BuzzerRequest struct
-#include <freertos/FreeRTOS.h> // For FreeRTOS types
+#include "config.h"
+#include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
 
@@ -16,7 +13,6 @@
 extern TimerState currentState;
 extern TimerState previousState;
 extern TimerState stateBeforeEdit;
-extern TimerState stateBeforeScan;
 extern OperatingMode currentMode;
 extern unsigned long startTime;
 extern unsigned long lastDisplayUpdateTime;
@@ -33,6 +29,7 @@ extern float recoilThreshold;
 extern int screenRotationSetting;
 extern int autoSleepMinutes;
 extern bool enableUISounds;
+extern int currentSpeakerVolume;
 
 extern int minFirstShotTimeMs;
 extern int postBeepDelayMs;
@@ -40,37 +37,11 @@ extern int startDelayMinMs;
 extern int startDelayMaxMs;
 extern int shotTimeoutMs;
 
-// --- Bluetooth Variables ---
-extern BluetoothA2DPSource a2dp_source;
-extern String currentBluetoothDeviceName;
-extern bool currentBluetoothAutoReconnect;
-extern int currentBluetoothVolume;
-extern int currentBluetoothAudioOffsetMs; 
-extern bool bluetoothJustConnected;
-extern bool bluetoothJustDisconnected;
-
-// Volatile variables for A2DP audio callback, managed by audio_utils and bluetooth_utils
-extern volatile int btBeepFrequency;
-extern volatile unsigned long btBeepScheduledStartTime; 
-extern volatile unsigned int btBeepDurationVolatile;   
-extern volatile bool new_bt_beep_request;              
-extern volatile bool current_bt_beep_is_active;        
-extern volatile unsigned long current_bt_beep_actual_end_time; 
-
 // --- Timer State Variables ---
-extern volatile bool is_listening_active;      // Flag to enable/disable mic reading after start beep
-extern volatile unsigned long beep_audio_end_time; // Calculated time when start beep audio should be finished
+extern volatile bool is_listening_active;
+extern volatile unsigned long beep_audio_end_time;
 extern unsigned long liveFireDelayEndTime;
 extern bool liveFireWaitingForDelay;
-
-
-// Bluetooth Scanner Variables
-extern ESP32BluetoothScanner btScanner;
-extern std::vector<BTDevice> discoveredBtDevices;
-extern int scanMenuSelection;
-extern int scanMenuScrollOffset;
-extern bool scanInProgress;
-extern unsigned long scanStartTime;
 
 // Shot Data Arrays
 extern int shotCount;
@@ -107,9 +78,6 @@ extern float currentBatteryVoltage;
 extern bool lowBatteryWarning;
 extern unsigned long lastBatteryCheckTime;
 
-// Create an instance of the library
-extern M5MicPeakRMS micPeakRMS;
-
 // Dry Fire Par Variables
 extern unsigned long randomDelayStartMs;
 extern unsigned long parTimerStartTime;
@@ -122,10 +90,6 @@ extern unsigned long lastBeepTime;
 extern unsigned long lastSoundPeakTime;
 extern bool checkingForRecoil;
 extern float peakRecoilValue;
-
-// --- FreeRTOS Handles ---
-extern QueueHandle_t buzzerQueue; 
-extern TaskHandle_t buzzerTaskHandle; 
 
 
 #endif // GLOBALS_H

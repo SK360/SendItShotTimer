@@ -1,7 +1,7 @@
 #ifndef OTA_UTILS_H
 #define OTA_UTILS_H
 
-#include <M5StickCPlus2.h>
+#include <M5Unified.h>
 #include "config.h"
 
 void startOtaUpdate();

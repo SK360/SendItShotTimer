@@ -1,7 +1,7 @@
 #ifndef SYSTEM_UTILS_H
 #define SYSTEM_UTILS_H
 
-#include <M5StickCPlus2.h>
+#include <M5Unified.h>
 #include "config.h" // For TimerState enum
 // For sleep functions
 #include "driver/rtc_io.h"

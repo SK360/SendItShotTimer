@@ -1,18 +1,13 @@
 // External Libraries
-#include <M5StickCPlus2.h>
-#include "M5MicPeakRMS.h"      // Custom library for microphone
-#include "BluetoothA2DPSource.h"
-#include <ESP32BluetoothScanner.h>
+#include <M5Unified.h>
 #include <Preferences.h>
-#include <cmath>        // For abs, sin
-#include <float.h>      // For FLT_MAX
-#include <vector>       // For std::vector
-#include "driver/rtc_io.h" // For light sleep wakeup
-#include "driver/gpio.h"   // For gpio_wakeup_enable
-#include "esp_sleep.h"     // For light sleep functions
-#include <freertos/FreeRTOS.h> // Added for FreeRTOS
+#include <cmath>
+#include <float.h>
+#include <vector>
+#include "driver/gpio.h"
+#include "esp_sleep.h"
+#include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/queue.h>
 
 // Project Headers
 #include "config.h"
@@ -21,7 +16,6 @@
 #include "input_handler.h"
 #include "timer_modes.h"
 #include "audio_utils.h"
-#include "bluetooth_utils.h"
 #include "nvs_utils.h"
 #include "system_utils.h"
 #include "ota_utils.h"
@@ -31,7 +25,6 @@
 TimerState currentState = MODE_SELECTION;
 TimerState previousState = MODE_SELECTION;
 TimerState stateBeforeEdit = SETTINGS_MENU_MAIN;
-TimerState stateBeforeScan = SETTINGS_MENU_BLUETOOTH;
 OperatingMode currentMode = MODE_LIVE_FIRE;
 unsigned long startTime = 0;
 unsigned long lastDisplayUpdateTime = 0;
@@ -47,6 +40,7 @@ float recoilThreshold = 1.5f;
 int screenRotationSetting = 3;
 int autoSleepMinutes = 1;
 bool enableUISounds = true;
+int currentSpeakerVolume = DEFAULT_SPEAKER_VOLUME;
 
 int minFirstShotTimeMs = 100;
 int postBeepDelayMs = 200;
@@ -54,35 +48,11 @@ int startDelayMinMs = 2000;
 int startDelayMaxMs = 5000;
 int shotTimeoutMs = 15000;
 
-BluetoothA2DPSource a2dp_source;
-String currentBluetoothDeviceName = "";
-bool currentBluetoothAutoReconnect = false;
-int currentBluetoothVolume = 80;
-int currentBluetoothAudioOffsetMs = 0; 
-bool bluetoothJustConnected = false;
-bool bluetoothJustDisconnected = false;
-
-// Volatile variables for A2DP audio callback
-volatile int btBeepFrequency = 0;
-volatile unsigned long btBeepScheduledStartTime = 0;
-volatile unsigned int btBeepDurationVolatile = 0;
-volatile bool new_bt_beep_request = false;
-volatile bool current_bt_beep_is_active = false; 
-volatile unsigned long current_bt_beep_actual_end_time = 0;
-
 // --- Timer State Variables ---
-volatile bool is_listening_active = false;      // Definition
-volatile unsigned long beep_audio_end_time = 0; // Definition
+volatile bool is_listening_active = false;
+volatile unsigned long beep_audio_end_time = 0;
 unsigned long liveFireDelayEndTime = 0;
 bool liveFireWaitingForDelay = false;
-
-
-ESP32BluetoothScanner btScanner;
-std::vector<BTDevice> discoveredBtDevices;
-int scanMenuSelection = 0;
-int scanMenuScrollOffset = 0;
-bool scanInProgress = false;
-unsigned long scanStartTime = 0;
 
 int shotCount = 0;
 unsigned long shotTimestamps[MAX_SHOTS_LIMIT];
@@ -114,8 +84,6 @@ float currentBatteryVoltage = 0.0f;
 bool lowBatteryWarning = false;
 unsigned long lastBatteryCheckTime = 0;
 
-M5MicPeakRMS micPeakRMS;
-
 unsigned long randomDelayStartMs = 0;
 unsigned long parTimerStartTime = 0;
 unsigned long beepSequenceStartTime = 0;
@@ -126,84 +94,37 @@ unsigned long lastBeepTime = 0;
 unsigned long lastSoundPeakTime = 0;
 bool checkingForRecoil = false;
 float peakRecoilValue = 0.0f;
-// AVRC metadata is defined in bluetooth_utils.cpp
 
-// --- FreeRTOS Handles ---
-QueueHandle_t buzzerQueue = NULL; 
-TaskHandle_t buzzerTaskHandle = NULL; 
-
-// Forward declaration for the task function (defined in audio_utils.cpp)
-void buzzerTask(void *pvParameters); 
 
 // --- Setup ---
 void setup() {
-    StickCP2.begin();
+    auto cfg = M5.config();
+    M5.begin(cfg);
 
-    preferences.begin(NVS_NAMESPACE, false); 
-    loadSettings(); 
+    preferences.begin(NVS_NAMESPACE, false);
+    loadSettings();
 
-    StickCP2.Lcd.setRotation(screenRotationSetting);
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(0); 
+    M5.Lcd.setRotation(screenRotationSetting);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(0);
 
-    pinMode(BUZZER_PIN, OUTPUT);
-    digitalWrite(BUZZER_PIN, LOW);
-    pinMode(BUZZER_PIN_2, OUTPUT);
-    digitalWrite(BUZZER_PIN_2, LOW);
+    M5.Speaker.begin();
+    M5.Speaker.setVolume(currentSpeakerVolume);
 
-    StickCP2.Speaker.end(); 
+    initMic();
 
-    if (!micPeakRMS.begin(StickCP2)) {
-        displayBootScreen("ERROR", "", "Mic Init Failed!");
-        while(true);
-    }
-    micPeakRMS.resetPeak();
-
-    if (!StickCP2.Imu.begin()) {
+    if (!M5.Imu.begin()) {
         displayBootScreen("WARNING", "", "IMU Init Failed!");
         delay(2000);
     }
 
-    // --- Create Buzzer Task and Queue ---
-    buzzerQueue = xQueueCreate(BUZZER_QUEUE_LENGTH, sizeof(BuzzerRequest));
-    if (buzzerQueue == NULL) {
-        displayBootScreen("ERROR", "", "Queue Fail!");
-        while(true);
-    }
-
-    xTaskCreatePinnedToCore(
-        buzzerTask,          
-        "BuzzerTask",        
-        BUZZER_TASK_STACK_SIZE, 
-        NULL,                
-        1,                   
-        &buzzerTaskHandle,   
-        0);                  
-
-    if (buzzerTaskHandle == NULL) {
-         displayBootScreen("ERROR", "", "Task Fail!");
-         while(true);
-    }
-    // --- End Buzzer Task Setup ---
-
-
-    checkBattery(); 
-
-    a2dp_source.set_auto_reconnect(false); 
-    a2dp_source.set_data_callback_in_frames(get_data_frames);
-    a2dp_source.set_volume(currentBluetoothVolume);
-    a2dp_source.set_on_connection_state_changed(a2dp_connection_state_changed_callback);
-    a2dp_source.set_ssid_callback(a2dp_ssid_callback); 
-
-    if (currentBluetoothAutoReconnect && !currentBluetoothDeviceName.isEmpty()) {
-        a2dp_source.start((char*)currentBluetoothDeviceName.c_str()); 
-    }
+    checkBattery();
 
     displayBootLogo();
     delay(1000);
 
-    StickCP2.Lcd.fillScreen(BLACK);
+    M5.Lcd.fillScreen(BLACK);
     displayBootScreen("SendIt", "Shot Timer", "v" FIRMWARE_VERSION);
     playSuccessBeeps();
     delay(500);
@@ -214,51 +135,34 @@ void setup() {
     setState(MODE_SELECTION);
     currentMenuSelection = (int)currentMode;
     menuScrollOffset = 0;
-    StickCP2.Lcd.fillScreen(BLACK);
+    M5.Lcd.fillScreen(BLACK);
 }
 
 // --- Main Loop ---
 void loop() {
-    StickCP2.update();
+    M5.update();
     unsigned long currentTime = millis();
 
-    if (bluetoothJustConnected) {
-        playSuccessBeeps(); 
-        bluetoothJustConnected = false;
-        if(currentState == SETTINGS_MENU_BLUETOOTH || currentState == BLUETOOTH_SCANNING || currentState == MODE_SELECTION) {
-            redrawMenu = true;
-        }
-    }
-    if (bluetoothJustDisconnected) {
-        playUnsuccessBeeps(); 
-        bluetoothJustDisconnected = false;
-        if(currentState == SETTINGS_MENU_BLUETOOTH || currentState == BLUETOOTH_SCANNING || currentState == MODE_SELECTION) {
-            redrawMenu = true;
-        }
-    }
-
-    if (autoSleepMinutes > 0 &&
-        currentState != BLUETOOTH_SCANNING &&
-        currentState != OTA_UPDATE &&
-        !a2dp_source.is_connected() ) {
+    if (autoSleepMinutes > 0 && currentState != OTA_UPDATE) {
         unsigned long autoSleepTimeoutMs = (unsigned long)autoSleepMinutes * 60UL * 1000UL;
         if (currentTime - lastActivityTime > autoSleepTimeoutMs) {
-            StickCP2.Lcd.fillScreen(BLACK);
-            StickCP2.Lcd.setTextDatum(MC_DATUM);
-            StickCP2.Lcd.drawString("Sleeping...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
+            M5.Lcd.fillScreen(BLACK);
+            M5.Lcd.setTextDatum(MC_DATUM);
+            M5.Lcd.drawString("Sleeping...", M5.Lcd.width()/2, M5.Lcd.height()/2);
             delay(SLEEP_MESSAGE_DELAY_MS);
-            StickCP2.Lcd.setBrightness(0);
-            StickCP2.Lcd.sleep();
-            StickCP2.Lcd.waitDisplay();
+            M5.Lcd.setBrightness(0);
+            M5.Lcd.sleep();
+            M5.Lcd.waitDisplay();
 
-            gpio_wakeup_enable(GPIO_NUM_37, GPIO_INTR_LOW_LEVEL);  // BtnA (front)
-            gpio_wakeup_enable(GPIO_NUM_39, GPIO_INTR_LOW_LEVEL);  // BtnB (side)
-            gpio_wakeup_enable(GPIO_NUM_35, GPIO_INTR_LOW_LEVEL);  // BtnPWR (top)
+            // M5StickS3 button GPIOs: BtnA=37, BtnB=39, BtnPWR=35
+            gpio_wakeup_enable(GPIO_NUM_37, GPIO_INTR_LOW_LEVEL);
+            gpio_wakeup_enable(GPIO_NUM_39, GPIO_INTR_LOW_LEVEL);
+            gpio_wakeup_enable(GPIO_NUM_35, GPIO_INTR_LOW_LEVEL);
             esp_sleep_enable_gpio_wakeup();
             esp_light_sleep_start();
 
-            StickCP2.Lcd.wakeup();
-            StickCP2.Lcd.setBrightness(100);
+            M5.Lcd.wakeup();
+            M5.Lcd.setBrightness(100);
             delay(200);
             resetActivityTimer();
             redrawMenu = true;
@@ -269,24 +173,22 @@ void loop() {
                             currentState == NOISY_RANGE_TIMING ||
                             currentState == CALIBRATE_THRESHOLD);
     if (micUpdateNeeded && (is_listening_active || currentState == CALIBRATE_THRESHOLD)) {
-        micPeakRMS.update();
+        updateMic();
     }
 
     if (currentTime - lastBatteryCheckTime > BATTERY_CHECK_INTERVAL_MS) {
         checkBattery();
-        if (currentState == DEVICE_STATUS ||
-            currentState == MODE_SELECTION || currentState == SETTINGS_MENU_BLUETOOTH || 
-            currentState == BLUETOOTH_SCANNING || lowBatteryWarning) { 
-             redrawMenu = true;
+        if (currentState == DEVICE_STATUS || currentState == MODE_SELECTION || lowBatteryWarning) {
+            redrawMenu = true;
         }
     }
 
-    if (StickCP2.BtnB.isPressed()) {
-        resetActivityTimer(); 
+    if (M5.BtnB.isPressed()) {
+        resetActivityTimer();
         if (btnTopPressTime == 0) {
             btnTopPressTime = currentTime;
         } else if (!btnTopHeld && (currentTime - btnTopPressTime > LONG_PRESS_DURATION_MS)) {
-            btnTopHeld = true; 
+            btnTopHeld = true;
 
             bool exitToModeSelect = (currentState == LIVE_FIRE_READY || currentState == LIVE_FIRE_TIMING || currentState == LIVE_FIRE_STOPPED ||
                                      currentState == DRY_FIRE_READY || currentState == DRY_FIRE_RUNNING ||
@@ -295,14 +197,14 @@ void loop() {
             if (exitToModeSelect) {
                 playUnsuccessBeeps();
                 setState(MODE_SELECTION);
-                currentMenuSelection = (int)currentMode; 
+                currentMenuSelection = (int)currentMode;
                 menuScrollOffset = 0;
-                StickCP2.Lcd.fillScreen(BLACK);
+                M5.Lcd.fillScreen(BLACK);
             }
         }
     } else {
-        btnTopPressTime = 0; 
-        btnTopHeld = false;  
+        btnTopPressTime = 0;
+        btnTopHeld = false;
     }
 
     switch (currentState) {
@@ -321,9 +223,9 @@ void loop() {
                     redrawMenu = false;
                 }
 
-                int rotation = StickCP2.Lcd.getRotation();
-                bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : StickCP2.BtnB.wasClicked();
-                bool downPressed = (rotation == 3) ? StickCP2.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+                int rotation = M5.Lcd.getRotation();
+                bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
+                bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
 
                 if (shotCount > 0) {
                     if (downPressed) {
@@ -331,35 +233,34 @@ void loop() {
                         if (shotReviewIndex < shotCount - 1) {
                             shotReviewIndex++;
                         }
-                        StickCP2.Lcd.fillScreen(BLACK);
+                        M5.Lcd.fillScreen(BLACK);
                         displayShotReviewScreen(shotReviewIndex);
                     }
                     if (upPressed) {
                         resetActivityTimer();
                         if (shotReviewIndex > 0) {
                             shotReviewIndex--;
-                            StickCP2.Lcd.fillScreen(BLACK);
+                            M5.Lcd.fillScreen(BLACK);
                             displayShotReviewScreen(shotReviewIndex);
                         } else if (shotReviewIndex == 0) {
                             shotReviewIndex = -1;
-                            StickCP2.Lcd.fillScreen(BLACK);
+                            M5.Lcd.fillScreen(BLACK);
                             displayStoppedScreen();
                         }
                     }
                 }
 
-                if (StickCP2.BtnA.wasClicked()) {
+                if (M5.BtnA.wasClicked()) {
                     resetActivityTimer();
                     shotReviewIndex = -1;
                     if (previousState == NOISY_RANGE_TIMING || previousState == NOISY_RANGE_GET_READY || currentMode == MODE_NOISY_RANGE) {
-                         setState(NOISY_RANGE_READY);
-                    } else if (previousState == DRY_FIRE_RUNNING || currentMode == MODE_DRY_FIRE) { 
-                        setState(DRY_FIRE_READY); 
-                    }
-                    else { 
+                        setState(NOISY_RANGE_READY);
+                    } else if (previousState == DRY_FIRE_RUNNING || currentMode == MODE_DRY_FIRE) {
+                        setState(DRY_FIRE_READY);
+                    } else {
                         setState(LIVE_FIRE_READY);
                     }
-                    StickCP2.Lcd.fillScreen(BLACK);
+                    M5.Lcd.fillScreen(BLACK);
                 }
             }
             break;
@@ -373,9 +274,7 @@ void loop() {
         case SETTINGS_MENU_BEEP:
         case SETTINGS_MENU_DRYFIRE:
         case SETTINGS_MENU_NOISY:
-        case SETTINGS_MENU_BLUETOOTH:
         case SETTINGS_MENU_DEVICE:    handleSettingsInput(); break;
-        case BLUETOOTH_SCANNING:      handleBluetoothScanning(); break;
         case EDIT_SETTING:            handleEditSettingInput(); break;
         case DEVICE_STATUS:           handleDeviceStatusInput(); break;
         case CALIBRATE_THRESHOLD:
@@ -383,8 +282,5 @@ void loop() {
         case OTA_UPDATE:              handleOtaUpdateLoop(); break;
         default: break;
     }
-    vTaskDelay(pdMS_TO_TICKS(10)); 
+    vTaskDelay(pdMS_TO_TICKS(10));
 }
-
-// --- Buzzer Task Definition Removed ---
-// (It is now defined in audio_utils.cpp)

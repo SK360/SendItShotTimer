@@ -1,7 +1,7 @@
 #ifndef TIMER_MODES_H
 #define TIMER_MODES_H
 
-#include <M5StickCPlus2.h>
+#include <M5Unified.h>
 
 void handleLiveFireReady();
 void handleLiveFireGetReady();

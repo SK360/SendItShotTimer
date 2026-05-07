@@ -4,15 +4,14 @@
 #include "display_utils.h"
 #include "nvs_utils.h"
 #include "system_utils.h"
-#include "audio_utils.h"     // For reset_bt_beep_state
-#include "bluetooth_utils.h"
+#include "audio_utils.h"
 #include "ota_utils.h"
 
 
 void handleModeSelectionInput() {
     const char* modeItems[] = {"Live Fire", "Dry Fire Par", "Noisy Range", "Settings"};
     int modeCount = sizeof(modeItems) / sizeof(modeItems[0]);
-    int rotation = StickCP2.Lcd.getRotation();
+    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
 
     if (currentMenuSelection < menuScrollOffset) {
@@ -26,8 +25,8 @@ void handleModeSelectionInput() {
         redrawMenu = false;
     }
 
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : StickCP2.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? StickCP2.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
+    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
 
     if (upPressed) {
         resetActivityTimer();
@@ -38,12 +37,12 @@ void handleModeSelectionInput() {
         currentMenuSelection = (currentMenuSelection + 1) % modeCount; redrawMenu = true;
     }
 
-    if (StickCP2.BtnA.wasClicked()) {
+    if (M5.BtnA.wasClicked()) {
         resetActivityTimer();
         if (currentMenuSelection == 3) {
             // Settings
             setState(SETTINGS_MENU_MAIN);
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             settingsMenuLevel = 0;
             currentMenuSelection = 0;
             menuScrollOffset = 0;
@@ -54,7 +53,7 @@ void handleModeSelectionInput() {
                 case MODE_DRY_FIRE:    setState(DRY_FIRE_READY); break;
                 case MODE_NOISY_RANGE: setState(NOISY_RANGE_READY); break;
             }
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             menuScrollOffset = 0;
         }
     }
@@ -65,21 +64,18 @@ void handleSettingsInput() {
     const char* title = "Settings";
     const char** items = nullptr;
     int itemCount = 0;
-    int rotation = StickCP2.Lcd.getRotation();
+    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
 
-    static const char* mainItems[] = {"Live Fire", "Dry Fire", "Noisy Range", "Beep Settings", "Bluetooth", "Device", "Power Off Now", "Exit"};
+    static const char* mainItems[] = {"Live Fire", "Dry Fire", "Noisy Range", "Beep Settings", "Device", "Power Off Now", "Exit"};
     static const char* liveFireItems[] = {"Max Shots", "Shot Threshold", "Shot Timeout", "Min 1st Shot", "Start Delay Min", "Start Delay Max", "Calibrate Thresh.", "Back"};
-    static const char* beepItems[] = {"Beep Duration", "Beep Tone", "Post Beep Delay", "UI Sounds", "Tone Sweep", "Back"};
+    static const char* beepItems[] = {"Beep Duration", "Beep Tone", "Post Beep Delay", "UI Sounds", "Volume", "Tone Sweep", "Back"};
     static const char* noisyItems[] = {"Recoil Threshold", "Calibrate Recoil", "Back"};
     static const char* deviceItems[] = {"Orientation", "Auto Sleep", "Device Status", "WiFi Settings", "Back"};
 
     const int maxDryFireItems = 1 + MAX_PAR_BEEPS + 1;
     static const char* dryFireItemsBuffer[maxDryFireItems];
     static String dryFireItemStrings[MAX_PAR_BEEPS];
-
-    static const char* bluetoothItems[7]; 
-
 
     switch (settingsMenuLevel) {
         case 0:
@@ -109,26 +105,14 @@ void handleSettingsInput() {
             title = "Noisy Range Settings";
             break;
         case 4:
-             items = beepItems;
-             itemCount = sizeof(beepItems) / sizeof(beepItems[0]);
-             title = "Beep Settings";
-             break;
-        case 6:
+            items = beepItems;
+            itemCount = sizeof(beepItems) / sizeof(beepItems[0]);
+            title = "Beep Settings";
+            break;
+        case 5:
             items = deviceItems;
             itemCount = sizeof(deviceItems) / sizeof(deviceItems[0]);
             title = "Device Settings";
-            break;
-        case 5:
-            title = "Bluetooth Settings";
-            bluetoothItems[0] = "Connect"; 
-            bluetoothItems[1] = "Disconnect";
-            bluetoothItems[2] = "Volume"; 
-            bluetoothItems[3] = "BT Audio Offset"; 
-            bluetoothItems[4] = "Auto Reconnect"; 
-            bluetoothItems[5] = "Scan for Devices"; 
-            bluetoothItems[6] = "Back";
-            items = bluetoothItems; 
-            itemCount = sizeof(bluetoothItems) / sizeof(bluetoothItems[0]); 
             break;
     }
 
@@ -147,8 +131,8 @@ void handleSettingsInput() {
         redrawMenu = false;
     }
 
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : StickCP2.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? StickCP2.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
+    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
 
     if (upPressed) {
         currentMenuSelection = (currentMenuSelection - 1 + itemCount) % itemCount; redrawMenu = true;
@@ -157,10 +141,10 @@ void handleSettingsInput() {
         currentMenuSelection = (currentMenuSelection + 1) % itemCount; redrawMenu = true;
     }
 
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
          if (settingsMenuLevel == 0) {
              setState(MODE_SELECTION); currentMenuSelection = (int)currentMode; menuScrollOffset = 0;
-             StickCP2.Lcd.fillScreen(BLACK);
+             M5.Lcd.fillScreen(BLACK);
          } else {
              int oldMenuLevel = settingsMenuLevel;
              settingsMenuLevel = 0;
@@ -169,8 +153,7 @@ void handleSettingsInput() {
                  case 2: currentMenuSelection = 1; break; // Dry Fire
                  case 3: currentMenuSelection = 2; break; // Noisy Range
                  case 4: currentMenuSelection = 3; break; // Beep Settings
-                 case 5: currentMenuSelection = 4; break; // Bluetooth
-                 case 6: currentMenuSelection = 5; break; // Device
+                 case 5: currentMenuSelection = 4; break; // Device
                  default: currentMenuSelection = 0; break;
              }
              menuScrollOffset = 0; redrawMenu = true;
@@ -178,7 +161,7 @@ void handleSettingsInput() {
          return;
     }
 
-    if (StickCP2.BtnA.wasClicked()) {
+    if (M5.BtnA.wasClicked()) {
         bool needsActionRedraw = true;
 
         if (settingsMenuLevel == 0) {
@@ -186,28 +169,27 @@ void handleSettingsInput() {
             else if (strcmp(items[currentMenuSelection], "Dry Fire") == 0) settingsMenuLevel = 2;
             else if (strcmp(items[currentMenuSelection], "Noisy Range") == 0) settingsMenuLevel = 3;
             else if (strcmp(items[currentMenuSelection], "Beep Settings") == 0) settingsMenuLevel = 4;
-            else if (strcmp(items[currentMenuSelection], "Bluetooth") == 0) settingsMenuLevel = 5;
-            else if (strcmp(items[currentMenuSelection], "Device") == 0) settingsMenuLevel = 6;
+            else if (strcmp(items[currentMenuSelection], "Device") == 0) settingsMenuLevel = 5;
             else if (strcmp(items[currentMenuSelection], "Power Off Now") == 0) {
-                StickCP2.Lcd.fillScreen(BLACK);
-                StickCP2.Lcd.setTextDatum(MC_DATUM);
-                StickCP2.Lcd.setTextFont(0);
-                StickCP2.Lcd.setTextSize(2);
-                StickCP2.Lcd.drawString("Power Off?", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2 - 15);
-                StickCP2.Lcd.setTextSize(1);
-                StickCP2.Lcd.drawString("Press=Cancel / Hold=Off", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2 + 15);
+                M5.Lcd.fillScreen(BLACK);
+                M5.Lcd.setTextDatum(MC_DATUM);
+                M5.Lcd.setTextFont(0);
+                M5.Lcd.setTextSize(2);
+                M5.Lcd.drawString("Power Off?", M5.Lcd.width()/2, M5.Lcd.height()/2 - 15);
+                M5.Lcd.setTextSize(1);
+                M5.Lcd.drawString("Press=Cancel / Hold=Off", M5.Lcd.width()/2, M5.Lcd.height()/2 + 15);
                 while (true) {
-                    StickCP2.update();
-                    if (StickCP2.BtnA.wasClicked()) {
+                    M5.update();
+                    if (M5.BtnA.wasClicked()) {
                         playUnsuccessBeeps();
                         redrawMenu = true;
                         break;
                     }
-                    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
-                        StickCP2.Lcd.fillScreen(BLACK);
-                        StickCP2.Lcd.drawString("Powering Off...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
+                    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+                        M5.Lcd.fillScreen(BLACK);
+                        M5.Lcd.drawString("Powering Off...", M5.Lcd.width()/2, M5.Lcd.height()/2);
                         delay(1500);
-                        StickCP2.Power.powerOff();
+                        M5.Power.powerOff();
                     }
                     delay(10);
                 }
@@ -215,7 +197,7 @@ void handleSettingsInput() {
             else if (strcmp(items[currentMenuSelection], "Exit") == 0) {
                 playSuccessBeeps(); setState(MODE_SELECTION);
                 currentMenuSelection = (int)currentMode; menuScrollOffset = 0; needsActionRedraw = false;
-                StickCP2.Lcd.fillScreen(BLACK);
+                M5.Lcd.fillScreen(BLACK);
             }
             currentMenuSelection = 0; menuScrollOffset = 0;
         }
@@ -223,19 +205,19 @@ void handleSettingsInput() {
             editingSettingName = items[currentMenuSelection];
             stateBeforeEdit = SETTINGS_MENU_GENERAL;
             if (strcmp(editingSettingName, "Max Shots") == 0) {
-                settingBeingEdited = EDIT_MAX_SHOTS; editingIntValue = currentMaxShots; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_MAX_SHOTS; editingIntValue = currentMaxShots; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Shot Threshold") == 0) {
-                settingBeingEdited = EDIT_SHOT_THRESHOLD; editingIntValue = shotThresholdRms; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_SHOT_THRESHOLD; editingIntValue = shotThresholdRms; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Shot Timeout") == 0) {
-                settingBeingEdited = EDIT_SHOT_TIMEOUT; editingIntValue = shotTimeoutMs; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_SHOT_TIMEOUT; editingIntValue = shotTimeoutMs; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Min 1st Shot") == 0) {
-                settingBeingEdited = EDIT_MIN_FIRST_SHOT; editingIntValue = minFirstShotTimeMs; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_MIN_FIRST_SHOT; editingIntValue = minFirstShotTimeMs; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Start Delay Min") == 0) {
-                settingBeingEdited = EDIT_START_DELAY_MIN; editingIntValue = startDelayMinMs; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_START_DELAY_MIN; editingIntValue = startDelayMinMs; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Start Delay Max") == 0) {
-                settingBeingEdited = EDIT_START_DELAY_MAX; editingIntValue = startDelayMaxMs; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_START_DELAY_MAX; editingIntValue = startDelayMaxMs; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Calibrate Thresh.") == 0) {
-                setState(CALIBRATE_THRESHOLD); peakRMSOverall = 0; micPeakRMS.resetPeak(); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                setState(CALIBRATE_THRESHOLD); peakRMSOverall = 0; resetMicPeak(); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Back") == 0) {
                 settingsMenuLevel = 0; currentMenuSelection = 0; menuScrollOffset = 0;
             }
@@ -244,7 +226,7 @@ void handleSettingsInput() {
             stateBeforeEdit = SETTINGS_MENU_DRYFIRE;
             if (strcmp(items[currentMenuSelection], "Par Beep Count") == 0) {
                 editingSettingName = items[currentMenuSelection];
-                settingBeingEdited = EDIT_PAR_BEEP_COUNT; editingIntValue = dryFireParBeepCount; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_PAR_BEEP_COUNT; editingIntValue = dryFireParBeepCount; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strncmp(items[currentMenuSelection], "Par Time", 8) == 0) {
                 int parTimeIndex = currentMenuSelection - 1; 
                 if (parTimeIndex >= 0 && parTimeIndex < dryFireParBeepCount) {
@@ -258,7 +240,7 @@ void handleSettingsInput() {
                     editingFloatValue = dryFireParTimesSec[parTimeIndex];
                     setState(EDIT_SETTING);
                     needsActionRedraw = false;
-                    StickCP2.Lcd.fillScreen(BLACK);
+                    M5.Lcd.fillScreen(BLACK);
                 }
             } else if (strcmp(items[currentMenuSelection], "Back") == 0) {
                 settingsMenuLevel = 0; currentMenuSelection = 1; menuScrollOffset = 0;
@@ -268,9 +250,9 @@ void handleSettingsInput() {
             editingSettingName = items[currentMenuSelection];
             stateBeforeEdit = SETTINGS_MENU_NOISY;
             if (strcmp(editingSettingName, "Recoil Threshold") == 0) {
-                settingBeingEdited = EDIT_RECOIL_THRESHOLD; editingFloatValue = recoilThreshold; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_RECOIL_THRESHOLD; editingFloatValue = recoilThreshold; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Calibrate Recoil") == 0) {
-                setState(CALIBRATE_RECOIL); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK); peakRecoilValue = 0;
+                setState(CALIBRATE_RECOIL); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK); peakRecoilValue = 0;
             } else if (strcmp(editingSettingName, "Back") == 0) {
                 settingsMenuLevel = 0; currentMenuSelection = 2; menuScrollOffset = 0;
             }
@@ -279,112 +261,35 @@ void handleSettingsInput() {
             editingSettingName = items[currentMenuSelection];
             stateBeforeEdit = SETTINGS_MENU_BEEP;
             if (strcmp(editingSettingName, "Beep Duration") == 0) {
-                settingBeingEdited = EDIT_BEEP_DURATION; editingULongValue = currentBeepDuration; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_BEEP_DURATION; editingULongValue = currentBeepDuration; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Beep Tone") == 0) {
-                settingBeingEdited = EDIT_BEEP_TONE; editingIntValue = currentBeepToneHz; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_BEEP_TONE; editingIntValue = currentBeepToneHz; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Post Beep Delay") == 0) {
-                settingBeingEdited = EDIT_POST_BEEP_DELAY; editingIntValue = postBeepDelayMs; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_POST_BEEP_DELAY; editingIntValue = postBeepDelayMs; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "UI Sounds") == 0) {
-                settingBeingEdited = EDIT_UI_SOUNDS; editingBoolValue = enableUISounds; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_UI_SOUNDS; editingBoolValue = enableUISounds; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
+            } else if (strcmp(editingSettingName, "Volume") == 0) {
+                settingBeingEdited = EDIT_SPEAKER_VOLUME; editingIntValue = currentSpeakerVolume; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Tone Sweep") == 0) {
-                settingBeingEdited = EDIT_TONE_SWEEP; editingIntValue = 2000; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_TONE_SWEEP; editingIntValue = 2000; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Back") == 0) {
                 settingsMenuLevel = 0; currentMenuSelection = 3;
                 menuScrollOffset = 0;
             }
         }
-        else if (settingsMenuLevel == 5) { // Bluetooth Settings
-            stateBeforeEdit = SETTINGS_MENU_BLUETOOTH;
-            editingSettingName = items[currentMenuSelection]; 
-            if (strcmp(items[currentMenuSelection], "Connect") == 0) {
-                if (!a2dp_source.is_connected()) {
-                    if (!currentBluetoothDeviceName.isEmpty()) {
-                        a2dp_source.end(); 
-                        delay(100); 
-                        a2dp_source.set_data_callback_in_frames(get_data_frames);
-                        a2dp_source.set_on_connection_state_changed(a2dp_connection_state_changed_callback);
-                        a2dp_source.set_ssid_callback(a2dp_ssid_callback);
-                        a2dp_source.set_volume(currentBluetoothVolume); 
-
-                        a2dp_source.start((char*)currentBluetoothDeviceName.c_str()); 
-                    } else {
-                        // No device name stored, maybe prompt to scan?
-                        playUnsuccessBeeps(); 
-                        redrawMenu = true; 
-                    }
-                } else {
-                    playSuccessBeeps(); // Already connected
-                }
-                needsActionRedraw = true; 
-            } else if (strcmp(items[currentMenuSelection], "Disconnect") == 0) {
-                if (a2dp_source.is_connected()){
-                    a2dp_source.disconnect();
-                }
-                reset_bt_beep_state(); 
-                needsActionRedraw = true; 
-            } else if (strcmp(items[currentMenuSelection], "Volume") == 0) {
-                settingBeingEdited = EDIT_BT_VOLUME;
-                editingIntValue = currentBluetoothVolume;
-                setState(EDIT_SETTING);
-                needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
-            } else if (strcmp(items[currentMenuSelection], "BT Audio Offset") == 0) { 
-                settingBeingEdited = EDIT_BT_AUDIO_OFFSET;
-                editingIntValue = currentBluetoothAudioOffsetMs;
-                setState(EDIT_SETTING);
-                needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
-            } else if (strcmp(items[currentMenuSelection], "Auto Reconnect") == 0) {
-                settingBeingEdited = EDIT_BT_AUTO_RECONNECT;
-                editingBoolValue = currentBluetoothAutoReconnect;
-                setState(EDIT_SETTING);
-                needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
-            } else if (strcmp(items[currentMenuSelection], "Scan for Devices") == 0) {
-                // --- Setup for A2DP Discovery Scan ---
-                if (a2dp_source.is_connected()){
-                    a2dp_source.disconnect(); 
-                }
-                a2dp_source.end(); // Fully stop A2DP 
-                delay(200);        
-                
-                // currentBluetoothDeviceName = ""; // Keep the last connected name unless a new one is selected
-                reset_bt_beep_state(); 
-
-                // Re-initialize essential callbacks 
-                a2dp_source.set_data_callback_in_frames(get_data_frames);
-                a2dp_source.set_on_connection_state_changed(a2dp_connection_state_changed_callback);
-                a2dp_source.set_ssid_callback(a2dp_ssid_callback); 
-                a2dp_source.set_volume(currentBluetoothVolume); 
-
-                stateBeforeScan = SETTINGS_MENU_BLUETOOTH;
-                setState(BLUETOOTH_SCANNING); 
-                scanInProgress = true; // Flag that scan should be active
-                scanStartTime = 0;     // Timer will start in handleBluetoothScanning
-                scanMenuSelection = 0;
-                scanMenuScrollOffset = 0;
-                discoveredBtDevices.clear(); 
-                
-                a2dp_source.start(); // Start A2DP in discovery mode 
-                
-                needsActionRedraw = false; 
-                StickCP2.Lcd.fillScreen(BLACK); 
-                // --- End Scan Setup ---
-            }
-            else if (strcmp(items[currentMenuSelection], "Back") == 0) {
-                settingsMenuLevel = 0; currentMenuSelection = 4; menuScrollOffset = 0;
-            }
-        }
-        else if (settingsMenuLevel == 6) {
+        else if (settingsMenuLevel == 5) { // Device Settings
             editingSettingName = items[currentMenuSelection];
             stateBeforeEdit = SETTINGS_MENU_DEVICE;
             if (strcmp(editingSettingName, "Orientation") == 0) {
-                settingBeingEdited = EDIT_ROTATION; editingIntValue = screenRotationSetting; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_ROTATION; editingIntValue = screenRotationSetting; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Auto Sleep") == 0) {
-                settingBeingEdited = EDIT_AUTO_SLEEP; editingIntValue = autoSleepMinutes; setState(EDIT_SETTING); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                settingBeingEdited = EDIT_AUTO_SLEEP; editingIntValue = autoSleepMinutes; setState(EDIT_SETTING); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "Device Status") == 0) {
-                setState(DEVICE_STATUS); needsActionRedraw = false; StickCP2.Lcd.fillScreen(BLACK);
+                setState(DEVICE_STATUS); needsActionRedraw = false; M5.Lcd.fillScreen(BLACK);
             } else if (strcmp(editingSettingName, "WiFi Settings") == 0) {
                 setState(OTA_UPDATE); startOtaUpdate(); needsActionRedraw = false;
             } else if (strcmp(editingSettingName, "Back") == 0) {
-                settingsMenuLevel = 0; currentMenuSelection = 5; menuScrollOffset = 0;
+                settingsMenuLevel = 0; currentMenuSelection = 4; menuScrollOffset = 0;
             }
         }
         if (needsActionRedraw) redrawMenu = true;
@@ -394,9 +299,9 @@ void handleSettingsInput() {
 void handleEditSettingInput() {
     resetActivityTimer();
     bool valueChanged = false;
-    int rotation = StickCP2.Lcd.getRotation();
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : StickCP2.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? StickCP2.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+    int rotation = M5.Lcd.getRotation();
+    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
+    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
 
     if (upPressed || downPressed) {
         valueChanged = true;
@@ -428,18 +333,10 @@ void handleEditSettingInput() {
                 editingIntValue = AUTO_SLEEP_OPTIONS[idx];
                 break;
             }
-            case EDIT_BT_AUTO_RECONNECT: editingBoolValue = !editingBoolValue; break;
             case EDIT_UI_SOUNDS: editingBoolValue = !editingBoolValue; break;
-            case EDIT_BT_VOLUME:
-                editingIntValue = min(max(editingIntValue + (increment * 5), 0), 127);
-                break;
-            case EDIT_BT_AUDIO_OFFSET: 
-                editingIntValue = min(max(editingIntValue + (increment * BT_AUDIO_OFFSET_STEP_MS), -1000), 500); 
-                if (a2dp_source.is_connected()) { 
-                    playSyncCalibrationTone(currentBeepToneHz, BEEP_NOTE_DURATION_MS, editingIntValue);
-                } else {
-                    playFeedbackTone(2500, 20); 
-                }
+            case EDIT_SPEAKER_VOLUME:
+                editingIntValue = min(max(editingIntValue + (increment * 10), 0), 255);
+                M5.Speaker.setVolume(editingIntValue);
                 break;
             case EDIT_TONE_SWEEP:
                 editingIntValue = min(max(editingIntValue + (increment * 50), 2000), 4000);
@@ -465,30 +362,29 @@ void handleEditSettingInput() {
             default: valueChanged = false; break;
         }
         if (settingBeingEdited == EDIT_ROTATION) {
-            StickCP2.Lcd.setRotation(editingIntValue);
+            M5.Lcd.setRotation(editingIntValue);
             redrawMenu = true;
         }
         if (valueChanged &&
-            settingBeingEdited != EDIT_BT_AUTO_RECONNECT &&
             settingBeingEdited != EDIT_UI_SOUNDS &&
-            settingBeingEdited != EDIT_BT_AUDIO_OFFSET &&
-            settingBeingEdited != EDIT_TONE_SWEEP) { 
-            playFeedbackTone(2500, 20); 
+            settingBeingEdited != EDIT_TONE_SWEEP &&
+            settingBeingEdited != EDIT_SPEAKER_VOLUME) {
+            playFeedbackTone(2500, 20);
         }
     }
 
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
         if (settingBeingEdited == EDIT_ROTATION) {
-             StickCP2.Lcd.setRotation(screenRotationSetting); 
+             M5.Lcd.setRotation(screenRotationSetting); 
         }
         setState(stateBeforeEdit);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         settingBeingEdited = EDIT_NONE;
         playUnsuccessBeeps();
         return;
     }
 
-    if (StickCP2.BtnA.wasClicked()) {
+    if (M5.BtnA.wasClicked()) {
         switch(settingBeingEdited) {
             case EDIT_MAX_SHOTS: currentMaxShots = editingIntValue; break;
             case EDIT_BEEP_DURATION: currentBeepDuration = editingULongValue; break;
@@ -507,15 +403,9 @@ void handleEditSettingInput() {
             case EDIT_ROTATION: screenRotationSetting = editingIntValue; break;
             case EDIT_AUTO_SLEEP: autoSleepMinutes = editingIntValue; break;
             case EDIT_UI_SOUNDS: enableUISounds = editingBoolValue; break;
-            case EDIT_BT_AUTO_RECONNECT:
-                currentBluetoothAutoReconnect = editingBoolValue;
-                break;
-            case EDIT_BT_VOLUME:
-                currentBluetoothVolume = editingIntValue;
-                a2dp_source.set_volume(currentBluetoothVolume);
-                break;
-            case EDIT_BT_AUDIO_OFFSET:
-                currentBluetoothAudioOffsetMs = editingIntValue;
+            case EDIT_SPEAKER_VOLUME:
+                currentSpeakerVolume = editingIntValue;
+                M5.Speaker.setVolume(currentSpeakerVolume);
                 break;
             case EDIT_START_DELAY_MIN: startDelayMinMs = editingIntValue; break;
             case EDIT_START_DELAY_MAX: startDelayMaxMs = editingIntValue; break;
@@ -524,7 +414,7 @@ void handleEditSettingInput() {
         }
         saveSettings();
         setState(stateBeforeEdit);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         settingBeingEdited = EDIT_NONE;
         playSuccessBeeps();
         return;
@@ -542,12 +432,12 @@ void handleDeviceStatusInput() {
         displayDeviceStatusScreen();
         redrawMenu = false;
     }
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
         setState(SETTINGS_MENU_DEVICE);
-        settingsMenuLevel = 6;
+        settingsMenuLevel = 5;
         currentMenuSelection = 3;
         menuScrollOffset = 0;
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
     }
 }
 
@@ -559,22 +449,22 @@ void handleCalibrationInput(TimerState calibrationType) {
     const char* title = "Calibrating...";
     const char* unit = "";
     bool valueChanged = false;
-    int rotation = StickCP2.Lcd.getRotation();
+    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
 
     if (calibrationType == CALIBRATE_THRESHOLD) {
         title = "Calibrate Threshold";
         unit = "RMS";
-        currentValue = micPeakRMS.getPeakRMS();
+        currentValue = getMicPeak();
         if (currentValue > peakRMSOverall) {
             peakRMSOverall = currentValue;
             valueChanged = true;
         }
-        micPeakRMS.resetPeak();
+        resetMicPeak();
     } else if (calibrationType == CALIBRATE_RECOIL) {
         title = "Calibrate Recoil";
         unit = "G";
-        StickCP2.Imu.getAccelData(&accX, &accY, &accZ);
+        M5.Imu.getAccelData(&accX, &accY, &accZ);
         currentValue = abs(accZ);
         if (currentValue > peakRecoilValue) {
             peakRecoilValue = currentValue;
@@ -584,29 +474,29 @@ void handleCalibrationInput(TimerState calibrationType) {
 
     if (redrawMenu || valueChanged) {
         if (!redrawMenu && valueChanged) {
-             StickCP2.Lcd.fillRect(0, StickCP2.Lcd.height() / 2 - 25, StickCP2.Lcd.width(), 50, BLACK);
+             M5.Lcd.fillRect(0, M5.Lcd.height() / 2 - 25, M5.Lcd.width(), 50, BLACK);
         } else {
-            StickCP2.Lcd.fillScreen(BLACK);
+            M5.Lcd.fillScreen(BLACK);
             displayCalibrationScreen(title, (calibrationType == CALIBRATE_RECOIL ? peakRecoilValue : peakRMSOverall), unit);
         }
-        StickCP2.Lcd.setTextDatum(MC_DATUM);
-        StickCP2.Lcd.setTextFont(1);
-        StickCP2.Lcd.setTextSize(3);
+        M5.Lcd.setTextDatum(MC_DATUM);
+        M5.Lcd.setTextFont(1);
+        M5.Lcd.setTextSize(3);
         String peakStr = "PEAK: " + String((calibrationType == CALIBRATE_RECOIL ? peakRecoilValue : peakRMSOverall), (calibrationType == CALIBRATE_RECOIL ? 2 : 0));
-        StickCP2.Lcd.drawString(peakStr, StickCP2.Lcd.width() / 2, (StickCP2.Lcd.height()/2));
+        M5.Lcd.drawString(peakStr, M5.Lcd.width() / 2, (M5.Lcd.height()/2));
         drawLowBatteryIndicator(); 
         redrawMenu = false;
     }
 
-    if (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+    if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
         stateBeforeEdit = (calibrationType == CALIBRATE_THRESHOLD) ? SETTINGS_MENU_GENERAL : SETTINGS_MENU_NOISY;
         settingsMenuLevel = (calibrationType == CALIBRATE_THRESHOLD) ? 1 : 3;
         setState(stateBeforeEdit);
         currentMenuSelection = (calibrationType == CALIBRATE_THRESHOLD) ? 5 : 1;
         menuScrollOffset = max(0, currentMenuSelection - itemsPerScreen + 1);
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         playUnsuccessBeeps();
-    } else if (StickCP2.BtnA.wasClicked()) {
+    } else if (M5.BtnA.wasClicked()) {
         if (calibrationType == CALIBRATE_THRESHOLD) {
             shotThresholdRms = (int)peakRMSOverall;
             stateBeforeEdit = SETTINGS_MENU_GENERAL;
@@ -622,7 +512,7 @@ void handleCalibrationInput(TimerState calibrationType) {
             currentMenuSelection = 1;
             menuScrollOffset = max(0, currentMenuSelection - itemsPerScreen + 1);
         }
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         playSuccessBeeps();
     }
 }

@@ -1,7 +1,7 @@
 #ifndef DISPLAY_UTILS_H
 #define DISPLAY_UTILS_H
 
-#include <M5StickCPlus2.h>
+#include <M5Unified.h>
 #include "config.h" // For enums if needed by display logic, and constants
 
 void displayBootLogo();
@@ -18,6 +18,5 @@ void displayDryFireRunningScreen(bool waiting, int beepNum, int totalBeeps);
 void drawLowBatteryIndicator();
 String getUpButtonLabel();
 String getDownButtonLabel();
-void displayBluetoothScanResults(); // Moved here from bluetooth_utils for logical grouping
 
 #endif // DISPLAY_UTILS_H

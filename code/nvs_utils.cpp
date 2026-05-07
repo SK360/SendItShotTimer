@@ -1,9 +1,9 @@
 #include "nvs_utils.h"
-#include "globals.h" // Access to global variables and preferences object
-#include "config.h"  // Access to NVS_NAMESPACE and KEY_ constants
+#include "globals.h"
+#include "config.h"
 
 void loadSettings() {
-    preferences.begin(NVS_NAMESPACE, false); // Open NVS
+    preferences.begin(NVS_NAMESPACE, false);
 
     currentMaxShots = preferences.getInt(KEY_MAX_SHOTS, 10);
     if (currentMaxShots > MAX_SHOTS_LIMIT) currentMaxShots = MAX_SHOTS_LIMIT;
@@ -26,13 +26,15 @@ void loadSettings() {
     screenRotationSetting = preferences.getInt(KEY_ROTATION, 3);
     if (screenRotationSetting != 1 && screenRotationSetting != 3) screenRotationSetting = 3;
     autoSleepMinutes = preferences.getInt(KEY_AUTO_SLEEP, 1);
-    // Validate: must be one of the allowed values (0, 1, 2, 5, 10)
     bool validSleep = false;
     for (int i = 0; i < AUTO_SLEEP_OPTIONS_COUNT; i++) {
         if (autoSleepMinutes == AUTO_SLEEP_OPTIONS[i]) { validSleep = true; break; }
     }
     if (!validSleep) autoSleepMinutes = 1;
     enableUISounds = preferences.getBool(KEY_UI_SOUNDS, true);
+    currentSpeakerVolume = preferences.getInt(KEY_SPEAKER_VOLUME, DEFAULT_SPEAKER_VOLUME);
+    if (currentSpeakerVolume < 0) currentSpeakerVolume = 0;
+    if (currentSpeakerVolume > 255) currentSpeakerVolume = 255;
 
     minFirstShotTimeMs = preferences.getInt(KEY_MIN_FIRST_SHOT, DEFAULT_MIN_FIRST_SHOT_TIME_MS);
     if (minFirstShotTimeMs < 0) minFirstShotTimeMs = 0;
@@ -54,50 +56,33 @@ void loadSettings() {
     if (shotTimeoutMs > 60000) shotTimeoutMs = 60000;
     if (shotTimeoutMs > 0 && shotTimeoutMs < 5000) shotTimeoutMs = 5000;
 
-    currentBluetoothDeviceName = preferences.getString(KEY_BT_DEVICE_NAME, "");
-    currentBluetoothAutoReconnect = preferences.getBool(KEY_BT_AUTO_RECONNECT, false);
-    currentBluetoothVolume = preferences.getInt(KEY_BT_VOLUME, 80);
-    currentBluetoothAudioOffsetMs = preferences.getInt(KEY_BT_AUDIO_OFFSET, 0);
-
-    peakBatteryVoltage = preferences.getFloat(KEY_PEAK_BATT, 4.2f); // Also load peak battery here
-
-    // preferences.end(); // Keep NVS open if frequently accessed, or close if done for now
+    peakBatteryVoltage = preferences.getFloat(KEY_PEAK_BATT, 4.2f);
 }
 
 void saveSettings() {
-    // preferences.begin(NVS_NAMESPACE, false); // Ensure NVS is open if not already
-
     preferences.putInt(KEY_MAX_SHOTS, currentMaxShots);
     preferences.putULong(KEY_BEEP_DUR, currentBeepDuration);
     preferences.putInt(KEY_BEEP_HZ, currentBeepToneHz);
     preferences.putInt(KEY_SHOT_THRESH, shotThresholdRms);
     preferences.putInt(KEY_DF_BEEP_CNT, dryFireParBeepCount);
     for (int i = 0; i < MAX_PAR_BEEPS; ++i) {
-         char key[12];
-         sprintf(key, "dfParT_%d", i);
-         preferences.putFloat(key, dryFireParTimesSec[i]);
+        char key[12];
+        sprintf(key, "dfParT_%d", i);
+        preferences.putFloat(key, dryFireParTimesSec[i]);
     }
     preferences.putFloat(KEY_NR_RECOIL, recoilThreshold);
     preferences.putInt(KEY_ROTATION, screenRotationSetting);
     preferences.putInt(KEY_AUTO_SLEEP, autoSleepMinutes);
     preferences.putBool(KEY_UI_SOUNDS, enableUISounds);
+    preferences.putInt(KEY_SPEAKER_VOLUME, currentSpeakerVolume);
 
     preferences.putInt(KEY_MIN_FIRST_SHOT, minFirstShotTimeMs);
     preferences.putInt(KEY_POST_BEEP_DELAY, postBeepDelayMs);
     preferences.putInt(KEY_START_DELAY_MIN, startDelayMinMs);
     preferences.putInt(KEY_START_DELAY_MAX, startDelayMaxMs);
     preferences.putInt(KEY_SHOT_TIMEOUT, shotTimeoutMs);
-
-    preferences.putString(KEY_BT_DEVICE_NAME, currentBluetoothDeviceName);
-    preferences.putBool(KEY_BT_AUTO_RECONNECT, currentBluetoothAutoReconnect);
-    preferences.putInt(KEY_BT_VOLUME, currentBluetoothVolume);
-    preferences.putInt(KEY_BT_AUDIO_OFFSET, currentBluetoothAudioOffsetMs);
-
-    // preferences.end(); // Close NVS if done with batch of writes
 }
 
 void savePeakVoltage(float voltage) {
-    // preferences.begin(NVS_NAMESPACE, false); // Ensure NVS is open
     preferences.putFloat(KEY_PEAK_BATT, voltage);
-    // preferences.end();
 }

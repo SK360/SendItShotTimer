@@ -20,9 +20,9 @@ void resetActivityTimer() {
 }
 
 void checkBattery() {
-    currentBatteryVoltage = StickCP2.Power.getBatteryVoltage() / 1000.0f;
+    currentBatteryVoltage = M5.Power.getBatteryVoltage() / 1000.0f;
 
-    if (currentBatteryVoltage > peakBatteryVoltage && currentBatteryVoltage > 3.0f && !StickCP2.Power.isCharging()) { // Only update peak if not charging and voltage is plausible
+    if (currentBatteryVoltage > peakBatteryVoltage && currentBatteryVoltage > 3.0f && !M5.Power.isCharging()) { // Only update peak if not charging and voltage is plausible
         peakBatteryVoltage = currentBatteryVoltage;
         savePeakVoltage(peakBatteryVoltage);
     }

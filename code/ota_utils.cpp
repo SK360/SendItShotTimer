@@ -103,16 +103,8 @@ input[type="number"]:focus,select:focus{outline:none;border-color:#4CAF50}
 <div class="field"><label>Beep Duration (ms)</label><input type="number" id="beepDuration" min="50" max="2000" step="50"></div>
 <div class="field"><label>Beep Tone (Hz)</label><input type="number" id="beepTone" min="500" max="8000" step="100"></div>
 <div class="field"><label>Post Beep Delay (ms)</label><input type="number" id="postBeepDelay" min="50" max="1000" step="25"></div>
+<div class="field"><label>Speaker Volume (0-255)</label><input type="number" id="speakerVolume" min="0" max="255" step="10"></div>
 <div class="field toggle"><label>UI Sounds</label><label class="switch"><input type="checkbox" id="uiSounds"><span class="slider"></span></label></div>
-</div>
-</details>
-
-<details>
-<summary>Bluetooth</summary>
-<div class="fields">
-<div class="field"><label>Volume</label><input type="number" id="btVolume" min="0" max="127" step="5"></div>
-<div class="field"><label>Audio Offset (ms)</label><input type="number" id="btAudioOffset" min="-1000" max="500" step="50"></div>
-<div class="field toggle"><label>Auto Reconnect</label><label class="switch"><input type="checkbox" id="btAutoReconnect"><span class="slider"></span></label></div>
 </div>
 </details>
 
@@ -160,10 +152,8 @@ document.getElementById('recoilThreshold').value=d.noisyRange.recoilThreshold.to
 document.getElementById('beepDuration').value=d.beep.beepDuration;
 document.getElementById('beepTone').value=d.beep.beepTone;
 document.getElementById('postBeepDelay').value=d.beep.postBeepDelay;
+document.getElementById('speakerVolume').value=d.beep.speakerVolume;
 document.getElementById('uiSounds').checked=d.beep.uiSounds;
-document.getElementById('btVolume').value=d.bluetooth.volume;
-document.getElementById('btAudioOffset').value=d.bluetooth.audioOffset;
-document.getElementById('btAutoReconnect').checked=d.bluetooth.autoReconnect;
 document.getElementById('screenRotation').value=d.device.screenRotation;
 document.getElementById('autoSleep').value=d.device.autoSleep;
 }).catch(function(){toast('Failed to load settings',false)});
@@ -177,8 +167,7 @@ for(var i=0;i<10;i++){var el=document.getElementById('parTime'+i);parTimes.push(
 var data={liveFire:{maxShots:parseInt(document.getElementById('maxShots').value)||0,shotThreshold:parseInt(document.getElementById('shotThreshold').value)||15311,minFirstShot:parseInt(document.getElementById('minFirstShot').value)||0,startDelayMin:parseInt(document.getElementById('startDelayMin').value)||0,startDelayMax:parseInt(document.getElementById('startDelayMax').value)||0},
 dryFire:{parBeepCount:n,parTimes:parTimes},
 noisyRange:{recoilThreshold:parseFloat(document.getElementById('recoilThreshold').value)||1.5},
-beep:{beepDuration:parseInt(document.getElementById('beepDuration').value)||150,beepTone:parseInt(document.getElementById('beepTone').value)||2000,postBeepDelay:parseInt(document.getElementById('postBeepDelay').value)||200,uiSounds:document.getElementById('uiSounds').checked},
-bluetooth:{volume:parseInt(document.getElementById('btVolume').value)||80,audioOffset:parseInt(document.getElementById('btAudioOffset').value)||0,autoReconnect:document.getElementById('btAutoReconnect').checked},
+beep:{beepDuration:parseInt(document.getElementById('beepDuration').value)||150,beepTone:parseInt(document.getElementById('beepTone').value)||2000,postBeepDelay:parseInt(document.getElementById('postBeepDelay').value)||200,speakerVolume:parseInt(document.getElementById('speakerVolume').value)||180,uiSounds:document.getElementById('uiSounds').checked},
 device:{screenRotation:parseInt(document.getElementById('screenRotation').value)||3,autoSleep:parseInt(document.getElementById('autoSleep').value)||0}};
 fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json()}).then(function(d){
 if(d.status==='ok'){toast('Settings saved!',true)}else{toast('Save failed: '+(d.message||'unknown error'),false)}}).catch(function(){toast('Save failed',false)})}
@@ -188,44 +177,44 @@ if(d.status==='ok'){toast('Settings saved!',true)}else{toast('Save failed: '+(d.
 )rawliteral";
 
 static void displayOtaScreen() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(TC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(2);
-    StickCP2.Lcd.drawString("WiFi Settings", StickCP2.Lcd.width() / 2, 5);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawString("WiFi Settings", M5.Lcd.width() / 2, 5);
 
-    StickCP2.Lcd.setTextSize(1);
-    StickCP2.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.setTextDatum(TL_DATUM);
     int y = 30;
     int lineH = 14;
 
-    StickCP2.Lcd.drawString("WiFi Network:", 10, y); y += lineH;
-    StickCP2.Lcd.setTextColor(GREEN, BLACK);
-    StickCP2.Lcd.drawString(AP_SSID, 10, y); y += lineH + 2;
+    M5.Lcd.drawString("WiFi Network:", 10, y); y += lineH;
+    M5.Lcd.setTextColor(GREEN, BLACK);
+    M5.Lcd.drawString(AP_SSID, 10, y); y += lineH + 2;
 
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.drawString("Password:", 10, y); y += lineH;
-    StickCP2.Lcd.setTextColor(GREEN, BLACK);
-    StickCP2.Lcd.drawString(AP_PASS, 10, y); y += lineH + 2;
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.drawString("Password:", 10, y); y += lineH;
+    M5.Lcd.setTextColor(GREEN, BLACK);
+    M5.Lcd.drawString(AP_PASS, 10, y); y += lineH + 2;
 
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.drawString("Open in browser:", 10, y); y += lineH;
-    StickCP2.Lcd.setTextColor(GREEN, BLACK);
-    StickCP2.Lcd.drawString("http://192.168.4.1", 10, y);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.drawString("Open in browser:", 10, y); y += lineH;
+    M5.Lcd.setTextColor(GREEN, BLACK);
+    M5.Lcd.drawString("http://192.168.4.1", 10, y);
 
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(BC_DATUM);
-    StickCP2.Lcd.drawString("Hold Front to Cancel", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() - 5);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(BC_DATUM);
+    M5.Lcd.drawString("Hold Front to Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 5);
 }
 
 static void displayOtaUploading() {
-    StickCP2.Lcd.fillScreen(BLACK);
-    StickCP2.Lcd.setTextColor(WHITE, BLACK);
-    StickCP2.Lcd.setTextDatum(MC_DATUM);
-    StickCP2.Lcd.setTextFont(0);
-    StickCP2.Lcd.setTextSize(3);
-    StickCP2.Lcd.drawString("Uploading...", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextColor(WHITE, BLACK);
+    M5.Lcd.setTextDatum(MC_DATUM);
+    M5.Lcd.setTextFont(0);
+    M5.Lcd.setTextSize(3);
+    M5.Lcd.drawString("Uploading...", M5.Lcd.width() / 2, M5.Lcd.height() / 2);
 }
 
 static void handleRoot() {
@@ -258,12 +247,8 @@ static void handleGetSettings() {
     bp["beepDuration"] = (int)currentBeepDuration;
     bp["beepTone"] = currentBeepToneHz;
     bp["postBeepDelay"] = postBeepDelayMs;
+    bp["speakerVolume"] = currentSpeakerVolume;
     bp["uiSounds"] = enableUISounds;
-
-    JsonObject bt = doc["bluetooth"].to<JsonObject>();
-    bt["volume"] = currentBluetoothVolume;
-    bt["audioOffset"] = currentBluetoothAudioOffsetMs;
-    bt["autoReconnect"] = currentBluetoothAutoReconnect;
 
     JsonObject dv = doc["device"].to<JsonObject>();
     dv["screenRotation"] = screenRotationSetting;
@@ -345,25 +330,12 @@ static void handlePostSettings() {
         if (bp["postBeepDelay"].is<int>()) {
             postBeepDelayMs = constrain((int)bp["postBeepDelay"], 50, 1000);
         }
+        if (bp["speakerVolume"].is<int>()) {
+            currentSpeakerVolume = constrain((int)bp["speakerVolume"], 0, 255);
+            M5.Speaker.setVolume(currentSpeakerVolume);
+        }
         if (bp["uiSounds"].is<bool>()) {
             enableUISounds = bp["uiSounds"];
-        }
-    }
-
-    // Bluetooth
-    if (doc["bluetooth"].is<JsonObject>()) {
-        JsonObject bt = doc["bluetooth"];
-        if (bt["volume"].is<int>()) {
-            currentBluetoothVolume = constrain((int)bt["volume"], 0, 127);
-            if (a2dp_source.is_connected()) {
-                a2dp_source.set_volume(currentBluetoothVolume);
-            }
-        }
-        if (bt["audioOffset"].is<int>()) {
-            currentBluetoothAudioOffsetMs = constrain((int)bt["audioOffset"], -1000, 500);
-        }
-        if (bt["autoReconnect"].is<bool>()) {
-            currentBluetoothAutoReconnect = bt["autoReconnect"];
         }
     }
 
@@ -373,7 +345,7 @@ static void handlePostSettings() {
         if (dv["screenRotation"].is<int>()) {
             int r = (int)dv["screenRotation"];
             screenRotationSetting = (r == 1 || r == 3) ? r : 3;
-            StickCP2.Lcd.setRotation(screenRotationSetting);
+            M5.Lcd.setRotation(screenRotationSetting);
         }
         if (dv["autoSleep"].is<int>()) {
             int s = (int)dv["autoSleep"];
@@ -392,14 +364,14 @@ static void handlePostSettings() {
 static void handleUpdateComplete() {
     if (otaSuccess) {
         server->send(200, "text/html", "<html><body style='background:#111;color:#4CAF50;text-align:center;padding:50px;font-family:Arial'><h1>Update Successful!</h1><p>Rebooting...</p></body></html>");
-        StickCP2.Lcd.fillScreen(BLACK);
-        StickCP2.Lcd.setTextColor(GREEN, BLACK);
-        StickCP2.Lcd.setTextDatum(MC_DATUM);
-        StickCP2.Lcd.setTextFont(0);
-        StickCP2.Lcd.setTextSize(2);
-        StickCP2.Lcd.drawString("Update OK!", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 - 10);
-        StickCP2.Lcd.setTextSize(1);
-        StickCP2.Lcd.drawString("Rebooting...", StickCP2.Lcd.width() / 2, StickCP2.Lcd.height() / 2 + 15);
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.setTextColor(GREEN, BLACK);
+        M5.Lcd.setTextDatum(MC_DATUM);
+        M5.Lcd.setTextFont(0);
+        M5.Lcd.setTextSize(2);
+        M5.Lcd.drawString("Update OK!", M5.Lcd.width() / 2, M5.Lcd.height() / 2 - 10);
+        M5.Lcd.setTextSize(1);
+        M5.Lcd.drawString("Rebooting...", M5.Lcd.width() / 2, M5.Lcd.height() / 2 + 15);
         delay(2000);
         ESP.restart();
     } else {
@@ -433,11 +405,6 @@ static void handleUpdateUpload() {
 }
 
 void startOtaUpdate() {
-    // Disconnect Bluetooth if connected to free up the radio
-    if (a2dp_source.is_connected()) {
-        a2dp_source.disconnect();
-    }
-
     WiFi.mode(WIFI_AP);
     WiFi.softAP(AP_SSID, AP_PASS);
 
@@ -460,16 +427,15 @@ void handleOtaUpdateLoop() {
         server->handleClient();
     }
 
-    // Allow cancel only when not mid-upload
     bool timedOut = !otaInProgress && (millis() - wifiStartTime > WIFI_TIMEOUT_MS);
-    if (!otaInProgress && (StickCP2.BtnA.pressedFor(LONG_PRESS_DURATION_MS) || timedOut)) {
+    if (!otaInProgress && (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS) || timedOut)) {
         stopOtaUpdate();
         resetActivityTimer();
-        settingsMenuLevel = 6;
+        settingsMenuLevel = 5;
         setState(SETTINGS_MENU_DEVICE);
         currentMenuSelection = 3; // "WiFi Settings" index in deviceItems
         menuScrollOffset = 0;
-        StickCP2.Lcd.fillScreen(BLACK);
+        M5.Lcd.fillScreen(BLACK);
         playUnsuccessBeeps();
     }
 }
