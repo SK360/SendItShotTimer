@@ -34,7 +34,6 @@ void handleLiveFireReady() {
         StickCP2.Lcd.setTextFont(0);
         StickCP2.Lcd.setTextSize(3);
         StickCP2.Lcd.drawString("Ready...", StickCP2.Lcd.width()/2, StickCP2.Lcd.height()/2);
-        delay(1000);
         randomSeed(micros());
         unsigned long randomDelay = random(startDelayMinMs, startDelayMaxMs + 1);
         liveFireDelayEndTime = millis() + randomDelay;
