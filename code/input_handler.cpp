@@ -11,7 +11,6 @@
 void handleModeSelectionInput() {
     const char* modeItems[] = {"Live Fire", "Dry Fire Par", "Noisy Range", "Settings"};
     int modeCount = sizeof(modeItems) / sizeof(modeItems[0]);
-    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
 
     if (currentMenuSelection < menuScrollOffset) {
@@ -25,14 +24,7 @@ void handleModeSelectionInput() {
         redrawMenu = false;
     }
 
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
-
-    if (upPressed) {
-        resetActivityTimer();
-        currentMenuSelection = (currentMenuSelection - 1 + modeCount) % modeCount; redrawMenu = true;
-    }
-    if (downPressed) {
+    if (M5.BtnB.wasClicked()) {
         resetActivityTimer();
         currentMenuSelection = (currentMenuSelection + 1) % modeCount; redrawMenu = true;
     }
@@ -64,7 +56,6 @@ void handleSettingsInput() {
     const char* title = "Settings";
     const char** items = nullptr;
     int itemCount = 0;
-    int rotation = M5.Lcd.getRotation();
     int itemsPerScreen = MENU_ITEMS_PER_SCREEN_LANDSCAPE;
 
     static const char* mainItems[] = {"Live Fire", "Dry Fire", "Noisy Range", "Beep Settings", "Device", "Power Off Now", "Exit"};
@@ -131,13 +122,7 @@ void handleSettingsInput() {
         redrawMenu = false;
     }
 
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
-
-    if (upPressed) {
-        currentMenuSelection = (currentMenuSelection - 1 + itemCount) % itemCount; redrawMenu = true;
-    }
-    if (downPressed) {
+    if (M5.BtnB.wasClicked()) {
         currentMenuSelection = (currentMenuSelection + 1) % itemCount; redrawMenu = true;
     }
 
@@ -299,9 +284,9 @@ void handleSettingsInput() {
 void handleEditSettingInput() {
     resetActivityTimer();
     bool valueChanged = false;
-    int rotation = M5.Lcd.getRotation();
-    bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
-    bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
+
+    bool upPressed   = M5.BtnA.wasClicked();
+    bool downPressed = M5.BtnB.wasClicked();
 
     if (upPressed || downPressed) {
         valueChanged = true;
@@ -374,8 +359,9 @@ void handleEditSettingInput() {
     }
 
     if (M5.BtnA.pressedFor(LONG_PRESS_DURATION_MS)) {
+        // cancel — restore original rotation if it was changed
         if (settingBeingEdited == EDIT_ROTATION) {
-             M5.Lcd.setRotation(screenRotationSetting); 
+             M5.Lcd.setRotation(screenRotationSetting);
         }
         setState(stateBeforeEdit);
         M5.Lcd.fillScreen(BLACK);
@@ -384,7 +370,8 @@ void handleEditSettingInput() {
         return;
     }
 
-    if (M5.BtnA.wasClicked()) {
+    if (M5.BtnB.pressedFor(LONG_PRESS_DURATION_MS)) {
+        // save
         switch(settingBeingEdited) {
             case EDIT_MAX_SHOTS: currentMaxShots = editingIntValue; break;
             case EDIT_BEEP_DURATION: currentBeepDuration = editingULongValue; break;
@@ -498,7 +485,7 @@ void handleCalibrationInput(TimerState calibrationType) {
         playUnsuccessBeeps();
     } else if (M5.BtnA.wasClicked()) {
         if (calibrationType == CALIBRATE_THRESHOLD) {
-            shotThresholdRms = (int)peakRMSOverall;
+            shotThresholdRms = (int)(peakRMSOverall * 0.75f);
             stateBeforeEdit = SETTINGS_MENU_GENERAL;
             settingsMenuLevel = 1;
             setState(stateBeforeEdit);

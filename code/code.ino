@@ -99,7 +99,10 @@ float peakRecoilValue = 0.0f;
 // --- Setup ---
 void setup() {
     auto cfg = M5.config();
+    cfg.fallback_board = m5::board_t::board_M5StickS3;
+    cfg.pmic_button = false;  // don't auto-sleep on power button; we use it for navigation
     M5.begin(cfg);
+    M5.Lcd.setBrightness(100);
 
     preferences.begin(NVS_NAMESPACE, false);
     loadSettings();
@@ -111,7 +114,6 @@ void setup() {
 
     M5.Speaker.begin();
     M5.Speaker.setVolume(currentSpeakerVolume);
-
     initMic();
 
     if (!M5.Imu.begin()) {
@@ -223,30 +225,17 @@ void loop() {
                     redrawMenu = false;
                 }
 
-                int rotation = M5.Lcd.getRotation();
-                bool upPressed = (rotation == 3) ? M5.BtnPWR.wasClicked() : M5.BtnB.wasClicked();
-                bool downPressed = (rotation == 3) ? M5.BtnB.wasClicked() : M5.BtnPWR.wasClicked();
-
-                if (shotCount > 0) {
-                    if (downPressed) {
-                        resetActivityTimer();
-                        if (shotReviewIndex < shotCount - 1) {
-                            shotReviewIndex++;
-                        }
+                if (shotCount > 0 && M5.BtnB.wasClicked()) {
+                    resetActivityTimer();
+                    // BtnB cycles forward through shots; wraps back to summary
+                    if (shotReviewIndex < shotCount - 1) {
+                        shotReviewIndex++;
                         M5.Lcd.fillScreen(BLACK);
                         displayShotReviewScreen(shotReviewIndex);
-                    }
-                    if (upPressed) {
-                        resetActivityTimer();
-                        if (shotReviewIndex > 0) {
-                            shotReviewIndex--;
-                            M5.Lcd.fillScreen(BLACK);
-                            displayShotReviewScreen(shotReviewIndex);
-                        } else if (shotReviewIndex == 0) {
-                            shotReviewIndex = -1;
-                            M5.Lcd.fillScreen(BLACK);
-                            displayStoppedScreen();
-                        }
+                    } else {
+                        shotReviewIndex = -1;
+                        M5.Lcd.fillScreen(BLACK);
+                        displayStoppedScreen();
                     }
                 }
 

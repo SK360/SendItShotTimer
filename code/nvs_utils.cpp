@@ -11,7 +11,7 @@ void loadSettings() {
 
     currentBeepDuration = preferences.getULong(KEY_BEEP_DUR, 150);
     currentBeepToneHz = preferences.getInt(KEY_BEEP_HZ, 2000);
-    shotThresholdRms = preferences.getInt(KEY_SHOT_THRESH, 15311);
+    shotThresholdRms = preferences.getInt(KEY_SHOT_THRESH, 8000);
     dryFireParBeepCount = preferences.getInt(KEY_DF_BEEP_CNT, 3);
     if (dryFireParBeepCount < 1) dryFireParBeepCount = 1;
     if (dryFireParBeepCount > MAX_PAR_BEEPS) dryFireParBeepCount = MAX_PAR_BEEPS;

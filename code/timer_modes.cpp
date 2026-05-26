@@ -59,10 +59,7 @@ void handleLiveFireGetReady() {
     }
     resetActivityTimer();
     unsigned long beepInitiationTime = millis();
-    playTone(currentBeepToneHz, currentBeepDuration); // Only plays on BT if connected, otherwise queues for buzzer
-    
-    // Calculate when the audio output (whichever is active) is expected to finish.
-    // If BT connected, consider offset and duration. If buzzer, consider duration.
+    playTone(currentBeepToneHz, currentBeepDuration);
     beep_audio_end_time = beepInitiationTime + currentBeepDuration + 150;
     is_listening_active = false;
     startTime = beepInitiationTime + postBeepDelayMs;
@@ -100,9 +97,8 @@ void handleLiveFireTiming() {
 
     // --- Listening is Active ---
     float currentElapsedTime = (startTime > 0 && currentTime > startTime) ? (currentTime - startTime) / 1000.0f : 0.0f;
-    
-    updateMic(); 
-    currentCyclePeakRMS = getMicPeak(); 
+
+    currentCyclePeakRMS = getMicPeak();
 
     if (currentCyclePeakRMS > peakRMSOverall) {
         peakRMSOverall = currentCyclePeakRMS;
@@ -364,7 +360,6 @@ void handleNoisyRangeTiming() {
         redrawMenu = false;
     }
 
-    updateMic(); // Update mic only when listening
     currentCyclePeakRMS = getMicPeak();
 
     if (!checkingForRecoil &&

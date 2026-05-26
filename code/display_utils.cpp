@@ -23,11 +23,11 @@ void displayBootScreen(const char* line1a, const char* line1b, const char* line2
 }
 
 String getUpButtonLabel() {
-    return (M5.Lcd.getRotation() == 3) ? "Top" : "Bottom";
+    return "Front";
 }
 
 String getDownButtonLabel() {
-    return (M5.Lcd.getRotation() == 3) ? "Bottom" : "Top";
+    return "Side";
 }
 
 void displayMenu(const char* title, const char* items[], int count, int selection, int scrollOffset) {
@@ -316,7 +316,7 @@ void displayEditScreen() {
         } else {
             M5.Lcd.drawString(getUpButtonLabel() + "=Up / " + getDownButtonLabel() + "=Down", M5.Lcd.width() / 2, M5.Lcd.height() - 25);
         }
-        M5.Lcd.drawString("Press=OK / Hold=Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
+        M5.Lcd.drawString("Side Hold=Save / Front Hold=Cancel", M5.Lcd.width() / 2, M5.Lcd.height() - 10);
     }
 
     M5.Lcd.setTextDatum(MC_DATUM);

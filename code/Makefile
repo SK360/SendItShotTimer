@@ -5,7 +5,7 @@ boardconfig :="${CORE}:m5stack_sticks3"
 ARDUINO_CLI ?= arduino-cli
 
 # Native USB — update this to match your device path (e.g. /dev/cu.usbmodem*)
-DEVICE :=/dev/cu.usbmodem01
+DEVICE :=/dev/cu.usbmodem21101
 
 ESPTOOL := ~/Library/Arduino15/packages/m5stack/tools/esptool_py/5.1.0/esptool
 BUILD_DIR := build/m5stack.esp32.m5stack_sticks3
